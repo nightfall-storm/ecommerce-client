@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Loader } from "@/components/loader"
 import { useEffect, useRef, useCallback } from 'react'
 import { useRouter } from "next/navigation"
+import { isAuthenticated } from "@/lib/actions/auth"
 
 const categories = ["All", "Electronics", "Sports", "Accessories", "Fashion"]
 
@@ -20,8 +21,12 @@ export default function Home() {
 
   // Check authentication on mount
   useEffect(() => {
-    const token = localStorage.getItem("accessToken")
-    // You can add additional token validation here if needed
+    const checkAuth = async () => {
+      const isAuth = await isAuthenticated()
+      // You can add additional auth validation here if needed
+      // For example, redirect to specific pages based on auth status
+    }
+    checkAuth()
   }, [])
 
   const {

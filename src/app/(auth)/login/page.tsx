@@ -1,15 +1,14 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Icons } from "@/components/icons"
-import { cn } from "@/lib/utils"
 import { useToast } from "@/components/ui/use-toast"
 import { Eye, EyeOff } from "lucide-react"
-import api from "@/lib/axios"
+import { login } from "@/lib/actions/auth"
 
 interface LoginCredentials {
   email: string
@@ -18,6 +17,7 @@ interface LoginCredentials {
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
@@ -31,33 +31,53 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      const response = await api.post("/api/Auth/login", credentials)
+      const result = await login(credentials)
 
-      // Store the token
-      localStorage.setItem("accessToken", response.data.token)
+      if (result.success) {
+        // Show success message
+        toast({
+          title: "Login successful",
+          description: "Welcome back!",
+        })
 
-      // Show success message
-      toast({
-        title: "Login successful",
-        description: "Welcome to admin dashboard!",
-      })
-
-      // Redirect to admin dashboard
-      router.push("/admin/dashboard")
+        // Get the callback URL from the search params or default to home
+        const callbackUrl = searchParams.get("callbackUrl") || "/"
+        router.push(callbackUrl)
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Login failed",
+          description: result.error || "Please check your credentials and try again.",
+        })
+      }
     } catch (error) {
       toast({
         variant: "destructive",
         title: "Login failed",
-        description: "Please check your credentials and try again.",
+        description: "An unexpected error occurred. Please try again.",
       })
     } finally {
       setIsLoading(false)
     }
   }
 
+  // Show error message if redirected with error
+  const error = searchParams.get("error")
+  if (error) {
+    const errorMessages: { [key: string]: string } = {
+      unauthorized: "You need to be logged in to access this page.",
+      session_expired: "Your session has expired. Please log in again.",
+    }
+
+    toast({
+      variant: "destructive",
+      title: "Authentication Error",
+      description: errorMessages[error] || "Please log in to continue.",
+    })
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/40">
-
       <div className="relative w-full max-w-lg">
         {/* Decorative elements */}
         <div className="absolute inset-0 grid grid-cols-2 -space-x-52 opacity-40">

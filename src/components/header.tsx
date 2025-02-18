@@ -17,26 +17,34 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useToast } from "@/components/ui/use-toast"
 import { useEffect, useState } from "react"
+import { isAuthenticated, logout, getUser } from "@/lib/actions/auth"
 
 export function Header() {
   const router = useRouter()
   const { toast } = useToast()
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isAuth, setIsAuth] = useState(false)
+  const [user, setUser] = useState<any>(null)
 
   useEffect(() => {
-    // Check if user is authenticated
-    const token = localStorage.getItem("accessToken")
-    setIsAuthenticated(!!token)
+    const checkAuth = async () => {
+      const auth = await isAuthenticated()
+      setIsAuth(auth)
+      if (auth) {
+        const userData = await getUser()
+        setUser(userData)
+      }
+    }
+    checkAuth()
   }, [])
 
-  const handleLogout = () => {
-    localStorage.removeItem("accessToken")
-    setIsAuthenticated(false)
+  const handleLogout = async () => {
+    await logout()
+    setIsAuth(false)
+    setUser(null)
     toast({
       title: "Logged out successfully",
       description: "Come back soon!",
     })
-    router.push("/")
   }
 
   return (
@@ -50,9 +58,8 @@ export function Header() {
           <SearchBar onSearch={(query) => console.log(query)} />
         </div>
 
-
         <div className="flex items-center space-x-4">
-          {isAuthenticated ? (
+          {isAuth ? (
             <>
               <Cart />
               <DropdownMenu>
@@ -62,7 +69,9 @@ export function Header() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuLabel>
+                    {user ? `${user.prenom} ${user.nom}` : 'My Account'}
+                  </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
                     <Link href="/orders">My Orders</Link>
@@ -70,10 +79,11 @@ export function Header() {
                   <DropdownMenuItem asChild>
                     <Link href="/profile">Profile</Link>
                   </DropdownMenuItem>
-                  {/* Add admin link if user is admin */}
-                  <DropdownMenuItem asChild>
-                    <Link href="/admin/manage-orders">Admin Dashboard</Link>
-                  </DropdownMenuItem>
+                  {user?.role === 'admin' && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/admin/manage-orders">Admin Dashboard</Link>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout} className="text-red-600">
                     <LogOut className="mr-2 h-4 w-4" />
