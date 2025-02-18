@@ -7,7 +7,7 @@ import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Filter } from "lucide-react"
 import { useInfiniteQuery } from "@tanstack/react-query"
-import { getProducts } from "@/services/products"
+import { getPublicProducts } from "@/services/products"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Loader } from "@/components/loader"
 import { useEffect, useRef, useCallback } from 'react'
@@ -23,9 +23,9 @@ export default function Home() {
     status,
   } = useInfiniteQuery({
     queryKey: ['products'],
-    queryFn: ({ pageParam = 1 }) => getProducts(pageParam),
-    getNextPageParam: (lastPage, allPages) => {
-      return lastPage.hasMore ? allPages.length + 1 : undefined
+    queryFn: ({ pageParam = 1 }) => getPublicProducts(pageParam),
+    getNextPageParam: (lastPage) => {
+      return lastPage.hasMore ? lastPage.currentPage + 1 : undefined
     },
     initialPageParam: 1,
   })
@@ -119,7 +119,7 @@ export default function Home() {
                       id: product.id.toString(),
                       name: product.nom,
                       price: product.prix,
-                      image: product.imageURL || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80',
+                      image: product.imageURL,
                       category: `Category ${product.categorieID}`
                     }}
                   />

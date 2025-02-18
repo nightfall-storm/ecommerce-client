@@ -27,10 +27,43 @@ export interface OrderDetail {
   product: string
 }
 
+export interface ProductsPageResponse {
+  items: Product[]
+  hasMore: boolean
+  total: number
+  currentPage: number
+  pageSize: number
+}
+
+// For dashboard - get all products without pagination
 export const getProducts = async (): Promise<Product[]> => {
   try {
     const response = await api.get<Product[]>('/Products')
     return response.data
+  } catch (error) {
+    console.error('API Error:', error)
+    throw new Error('Failed to fetch products')
+  }
+}
+
+// For public page - get products with pagination
+export const getPublicProducts = async (page: number = 1, pageSize: number = 8): Promise<ProductsPageResponse> => {
+  try {
+    const response = await api.get<Product[]>('/Products')
+    const products = response.data
+
+    // Calculate pagination
+    const startIndex = (page - 1) * pageSize
+    const endIndex = startIndex + pageSize
+    const paginatedProducts = products.slice(startIndex, endIndex)
+
+    return {
+      items: paginatedProducts,
+      hasMore: endIndex < products.length,
+      total: products.length,
+      currentPage: page,
+      pageSize: pageSize
+    }
   } catch (error) {
     console.error('API Error:', error)
     throw new Error('Failed to fetch products')
