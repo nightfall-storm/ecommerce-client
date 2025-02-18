@@ -49,7 +49,7 @@ export default function Home() {
       <main className="flex-1">
         <Hero />
 
-        <section className="container py-16">
+        <section className="container mx-auto px-4 py-16 max-w-7xl">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-3xl font-bold tracking-tight">Featured Products</h2>
             <Button variant="outline" className="hidden md:flex">
@@ -58,19 +58,19 @@ export default function Home() {
             </Button>
           </div>
 
-          <div className="flex gap-4 mb-8 overflow-x-auto pb-2">
+          <div className="flex gap-4 mb-8 overflow-x-auto pb-2 scrollbar-hide">
             {categories.map((category) => (
               <Button
                 key={category}
                 variant={category === "All" ? "default" : "outline"}
-                className="rounded-full"
+                className="rounded-full whitespace-nowrap"
               >
                 {category}
               </Button>
             ))}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {MOCK_PRODUCTS.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
@@ -81,7 +81,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="container py-16 border-t">
+        <section className="container mx-auto px-4 py-16 max-w-7xl border-t">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
             <div>
               <h3 className="text-lg font-semibold mb-2">Free Shipping</h3>

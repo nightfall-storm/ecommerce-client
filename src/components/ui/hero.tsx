@@ -3,7 +3,7 @@ import { Button } from "./button"
 export function Hero() {
   return (
     <div className="relative overflow-hidden bg-background py-24">
-      <div className="container relative z-10">
+      <div className="container mx-auto px-4 max-w-7xl relative z-10">
         <div className="mx-auto max-w-2xl text-center">
           <h1 className="text-4xl font-bold tracking-tight sm:text-6xl">
             Discover Amazing Products
