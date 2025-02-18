@@ -10,10 +10,31 @@ export interface Product {
   categorieID: number
 }
 
-export const getProducts = async (): Promise<Product[]> => {
+export interface ProductsResponse {
+  items: Product[]
+  hasMore: boolean
+  total: number
+}
+
+// Helper function to simulate network delay
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+
+export const getProducts = async (page: number = 1, limit: number = 8): Promise<ProductsResponse> => {
   try {
+    // Add artificial delay
+    await delay(2000)
+
     const response = await api.get<Product[]>('/products')
-    return response.data
+    const products = response.data
+    const startIndex = (page - 1) * limit
+    const endIndex = startIndex + limit
+    const paginatedProducts = products.slice(startIndex, endIndex)
+
+    return {
+      items: paginatedProducts,
+      hasMore: endIndex < products.length,
+      total: products.length
+    }
   } catch (error) {
     console.error('API Error:', error)
     if (error instanceof Error) {
