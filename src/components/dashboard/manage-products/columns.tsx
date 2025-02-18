@@ -32,7 +32,7 @@ export const columns = ({
       return (
         <Avatar className="h-12 w-12">
           <AvatarImage
-            src={process.env.NEXT_PUBLIC_API_URL + imageUrl}
+            src={imageUrl}
             alt={row.getValue("nom")}
           />
           <AvatarFallback>P</AvatarFallback>
