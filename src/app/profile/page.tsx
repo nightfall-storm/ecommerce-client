@@ -20,14 +20,21 @@ import {
   Phone,
   Mail,
   Clock,
-  ShoppingBag,
-  Loader2,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { formatPrice } from "@/lib/utils"
-import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import Link from "next/link"
+import { formatPrice } from "@/lib/utils"
+import { Loader } from "@/components/loader"
+
+interface Order {
+  id: number
+  dateCommande: string
+  statut: string
+  total: number
+  numberOfItems: number
+}
 
 interface UserProfile {
   id: number
@@ -44,13 +51,7 @@ interface UserProfile {
     [key: string]: number
   }
   lastOrderDate: string
-  recentOrders: {
-    id: number
-    dateCommande: string
-    statut: string
-    total: number
-    numberOfItems: number
-  }[]
+  recentOrders: Order[]
 }
 
 const getStatusColor = (status: string) => {
@@ -69,9 +70,9 @@ const getStatusColor = (status: string) => {
 }
 
 export default function ProfilePage() {
-  const { data: profile, isLoading } = useQuery<UserProfile>({
-    queryKey: ['profile'],
-    queryFn: getUser,
+  const { data: user, isLoading } = useQuery({
+    queryKey: ['user'],
+    queryFn: getUser
   })
 
   if (isLoading) {
@@ -79,8 +80,8 @@ export default function ProfilePage() {
       <div className="flex min-h-screen flex-col">
         <Header />
         <main className="flex-1 container mx-auto px-4 py-8">
-          <div className="flex justify-center items-center h-[400px]">
-            <Loader2 className="h-8 w-8 animate-spin" />
+          <div className="h-[400px]">
+            <Loader size="lg" className="h-full" />
           </div>
         </main>
         <Footer />
@@ -88,15 +89,15 @@ export default function ProfilePage() {
     )
   }
 
-  if (!profile) {
+  if (!user) {
     return (
       <div className="flex min-h-screen flex-col">
         <Header />
         <main className="flex-1 container mx-auto px-4 py-8">
-          <div className="text-center py-12">
-            <h3 className="text-lg font-medium mb-2">Profile not found</h3>
+          <div className="text-center">
+            <h1 className="text-2xl font-bold mb-4">Profile Not Found</h1>
             <p className="text-muted-foreground mb-4">
-              Please try logging in again.
+              Please log in to view your profile.
             </p>
             <Button asChild>
               <Link href="/login">Login</Link>
@@ -112,174 +113,162 @@ export default function ProfilePage() {
     <div className="flex min-h-screen flex-col">
       <Header />
       <main className="flex-1 container mx-auto px-4 py-8">
-        <div className="max-w-6xl mx-auto space-y-8">
-          {/* Profile Header */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold">My Profile</h1>
-              <p className="text-muted-foreground">
-                Manage your account settings and view your order history
-              </p>
-            </div>
-            <Button asChild variant="outline">
-              <Link href="/orders">View All Orders</Link>
-            </Button>
-          </div>
-
-          {/* Personal Information */}
+        <div className="max-w-5xl mx-auto space-y-8">
+          {/* Profile Overview */}
           <Card>
             <CardHeader>
-              <CardTitle>Personal Information</CardTitle>
-              <CardDescription>Your account details and contact information</CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Profile Overview</CardTitle>
+                  <CardDescription>Your personal information</CardDescription>
+                </div>
+                <Button variant="outline" asChild>
+                  <Link href="/profile/edit">Edit Profile</Link>
+                </Button>
+              </div>
             </CardHeader>
             <CardContent className="grid gap-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="flex items-center gap-3">
-                  <User className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Full Name</p>
-                    <p className="font-medium">{profile.prenom} {profile.nom}</p>
-                  </div>
+              <div className="flex items-center space-x-4">
+                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <User className="h-6 w-6 text-primary" />
                 </div>
-                <div className="flex items-center gap-3">
-                  <Mail className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Email</p>
-                    <p className="font-medium">{profile.email}</p>
-                  </div>
+                <div>
+                  <p className="font-medium">{`${user.prenom} ${user.nom}`}</p>
+                  <p className="text-sm text-muted-foreground">
+                    Member since {new Date(user.createdAt).getFullYear()}
+                  </p>
                 </div>
-                <div className="flex items-center gap-3">
-                  <MapPin className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Address</p>
-                    <p className="font-medium">{profile.adresse || 'Not provided'}</p>
-                  </div>
+              </div>
+
+              <Separator />
+
+              <div className="grid gap-4">
+                <div className="flex items-center space-x-4">
+                  <Mail className="h-4 w-4 text-muted-foreground" />
+                  <span>{user.email}</span>
                 </div>
-                <div className="flex items-center gap-3">
-                  <Phone className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Phone</p>
-                    <p className="font-medium">{profile.telephone || 'Not provided'}</p>
+                {user.adresse && (
+                  <div className="flex items-center space-x-4">
+                    <MapPin className="h-4 w-4 text-muted-foreground" />
+                    <span>{user.adresse}</span>
                   </div>
-                </div>
+                )}
+                {user.telephone && (
+                  <div className="flex items-center space-x-4">
+                    <Phone className="h-4 w-4 text-muted-foreground" />
+                    <span>{user.telephone}</span>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
 
-          {/* Statistics */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Order Statistics */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-3">
-                  <Receipt className="h-5 w-5 text-primary" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Total Orders</p>
-                    <p className="text-2xl font-bold">{profile.totalOrders}</p>
-                  </div>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Total Orders
+                </CardTitle>
+                <Package className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{user.totalOrders || 0}</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Total Spent
+                </CardTitle>
+                <Receipt className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {formatPrice(user.totalSpent || 0)}
                 </div>
               </CardContent>
             </Card>
             <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-3">
-                  <CreditCard className="h-5 w-5 text-primary" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Total Spent</p>
-                    <p className="text-2xl font-bold">{formatPrice(profile.totalSpent)}</p>
-                  </div>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Products Bought
+                </CardTitle>
+                <CreditCard className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {user.totalProductsBought || 0}
                 </div>
               </CardContent>
             </Card>
             <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-3">
-                  <Package className="h-5 w-5 text-primary" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Products Bought</p>
-                    <p className="text-2xl font-bold">{profile.totalProductsBought}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-3">
-                  <Clock className="h-5 w-5 text-primary" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Last Order</p>
-                    <p className="text-2xl font-bold">
-                      {profile.lastOrderDate
-                        ? new Date(profile.lastOrderDate).toLocaleDateString()
-                        : 'No orders'}
-                    </p>
-                  </div>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Last Order
+                </CardTitle>
+                <Clock className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {user.lastOrderDate
+                    ? new Date(user.lastOrderDate).toLocaleDateString()
+                    : "No orders yet"}
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Order Status Distribution */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Orders by Status</CardTitle>
-              <CardDescription>Distribution of your orders by their current status</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-4">
-                {Object.entries(profile.ordersByStatus).map(([status, count]) => (
-                  <div key={status} className="flex items-center gap-2">
-                    <Badge variant="outline" className={getStatusColor(status)}>
-                      {status}
-                    </Badge>
-                    <span className="font-medium">{count}</span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Recent Orders */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Orders</CardTitle>
-              <CardDescription>Your most recent purchases</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {profile.recentOrders.map((order) => (
-                  <div
-                    key={order.id}
-                    className="flex items-center justify-between p-4 rounded-lg bg-muted/40"
-                  >
-                    <div className="flex items-center gap-4">
-                      <ShoppingBag className="h-5 w-5 text-muted-foreground" />
-                      <div>
-                        <p className="font-medium">Order #{order.id}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {new Date(order.dateCommande).toLocaleDateString()} •{" "}
-                          {order.numberOfItems} items
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <Badge
-                        variant="outline"
-                        className={getStatusColor(order.statut)}
-                      >
-                        {order.statut}
-                      </Badge>
-                      <div className="text-right">
-                        <p className="font-medium">{formatPrice(order.total)}</p>
-                      </div>
-                      <Button asChild variant="ghost" size="sm">
-                        <Link href={`/orders/${order.id}`}>View</Link>
-                      </Button>
-                    </div>
+          {user.recentOrders && user.recentOrders.length > 0 && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Recent Orders</CardTitle>
+                    <CardDescription>Your latest purchases</CardDescription>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                  <Button variant="outline" asChild>
+                    <Link href="/orders">View All Orders</Link>
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {user.recentOrders.map((order: Order) => (
+                    <div
+                      key={order.id}
+                      className="flex items-center justify-between p-4 rounded-lg border"
+                    >
+                      <div className="space-y-1">
+                        <p className="font-medium">Order #{order.id}</p>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Clock className="h-4 w-4" />
+                          {new Date(order.dateCommande).toLocaleDateString()}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <p className="font-medium">
+                            {formatPrice(order.total)}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {order.numberOfItems} items
+                          </p>
+                        </div>
+                        <Badge
+                          variant="outline"
+                          className={getStatusColor(order.statut)}
+                        >
+                          {order.statut}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </main>
       <Footer />

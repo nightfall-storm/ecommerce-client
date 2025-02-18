@@ -4,15 +4,15 @@ import { useQuery } from "@tanstack/react-query"
 import { getOrders, getOrderDetails } from "@/services/orders"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
-import { Loader2, Package, Calendar, Clock, CheckCircle2 } from "lucide-react"
+import { Package, Calendar } from "lucide-react"
 import Image from "next/image"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import { formatPrice } from "@/lib/utils"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { useEffect, useState } from "react"
 import { getUser } from "@/lib/actions/auth"
+import { Loader } from "@/components/loader"
 
 interface OrderWithDetails {
   id: number
@@ -54,24 +54,20 @@ const getStatusColor = (status: string) => {
 }
 
 export default function OrdersPage() {
-  const [clientId, setClientId] = useState<number | null>(null)
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      const user = await getUser()
-      if (user) {
-        setClientId(user.id)
-      }
-    }
-    fetchUser()
-  }, [])
-
-  const { data: orders, isLoading: isLoadingOrders } = useQuery({
-    queryKey: ['orders', clientId],
-    queryFn: () => getOrders(clientId!),
-    enabled: !!clientId,
+  // Query for user data
+  const { data: user, isLoading: isLoadingUser } = useQuery({
+    queryKey: ['user'],
+    queryFn: getUser
   })
 
+  // Query for orders
+  const { data: orders, isLoading: isLoadingOrders } = useQuery({
+    queryKey: ['orders', user?.id],
+    queryFn: () => getOrders(user?.id!),
+    enabled: !!user?.id,
+  })
+
+  // Query for order details
   const { data: ordersWithDetails, isLoading: isLoadingDetails } = useQuery({
     queryKey: ['ordersDetails', orders],
     queryFn: async () => {
@@ -87,7 +83,7 @@ export default function OrdersPage() {
     enabled: !!orders,
   })
 
-  const isLoading = isLoadingOrders || isLoadingDetails
+  const isLoading = isLoadingUser || isLoadingOrders || isLoadingDetails
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -97,8 +93,8 @@ export default function OrdersPage() {
           <h1 className="text-3xl font-bold mb-8">My Orders</h1>
 
           {isLoading ? (
-            <div className="flex justify-center items-center h-64">
-              <Loader2 className="h-8 w-8 animate-spin" />
+            <div className="h-[400px]">
+              <Loader size="lg" className="h-full" />
             </div>
           ) : !ordersWithDetails || ordersWithDetails.length === 0 ? (
             <div className="text-center py-12">

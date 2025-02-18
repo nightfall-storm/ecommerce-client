@@ -13,6 +13,7 @@ import { useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { useCartStore } from "@/lib/store/cart"
 import { toast } from "sonner"
+import { Loader } from "@/components/loader"
 
 export default function ProductPage() {
   const searchParams = useSearchParams()
@@ -23,7 +24,8 @@ export default function ProductPage() {
   const { data: product, isLoading, error } = useQuery({
     queryKey: ['product', id],
     queryFn: () => getProduct(parseInt(id || '')),
-    enabled: !!id
+    enabled: !!id,
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   })
 
   const handleAddToCart = () => {
@@ -33,7 +35,7 @@ export default function ProductPage() {
         name: product.nom,
         price: product.prix,
         quantity: quantity,
-        image: product.imageURL || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80',
+        image: product.imageURL,
         stock: product.stock
       })
       toast.success('Added to cart')
@@ -66,40 +68,23 @@ export default function ProductPage() {
     )
   }
 
-  if (error) {
-    return (
-      <div className="flex min-h-screen flex-col">
-        <Header />
-        <main className="flex-1 container mx-auto px-4 py-8">
-          <div className="text-center text-red-500">
-            <p>Error loading product. Please try again later.</p>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    )
-  }
-
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
       <main className="flex-1 container mx-auto px-4 py-8">
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <Skeleton className="aspect-square" />
-            <div className="space-y-4">
-              <Skeleton className="h-8 w-2/3" />
-              <Skeleton className="h-4 w-1/3" />
-              <Skeleton className="h-24 w-full" />
-              <Skeleton className="h-10 w-32" />
-              <Skeleton className="h-12 w-full" />
-            </div>
+          <div className="h-[400px]">
+            <Loader size="lg" className="h-full" />
+          </div>
+        ) : error ? (
+          <div className="text-center text-red-500">
+            <p>Error loading product. Please try again later.</p>
           </div>
         ) : product ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="relative aspect-square">
               <Image
-                src={product.imageURL || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80'}
+                src={product.imageURL}
                 alt={product.nom}
                 fill
                 className="object-cover rounded-lg"

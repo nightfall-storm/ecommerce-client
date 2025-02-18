@@ -6,9 +6,10 @@ import { DataTable } from "./data-table"
 import { columns } from "./columns"
 import { ProductDialog } from "./product-dialog"
 import { Button } from "@/components/ui/button"
-import { Plus, Loader2 } from "lucide-react"
+import { Plus } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { Loader } from "@/components/loader"
 
 export default function ProductsContainer() {
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -102,8 +103,8 @@ export default function ProductsContainer() {
 
   if (isLoading) {
     return (
-      <div className="flex h-[200px] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="h-[400px]">
+        <Loader size="lg" className="h-full" />
       </div>
     )
   }

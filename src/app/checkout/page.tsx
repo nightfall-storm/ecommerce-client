@@ -4,7 +4,6 @@ import { useEffect, useState } from "react"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { useCartStore } from "@/lib/store/cart"
-import { createCheckoutSession } from "@/services/checkout"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { formatPrice } from "@/lib/utils"
@@ -13,44 +12,51 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
-import { Loader2, CreditCard, ShoppingCart } from "lucide-react"
 import Image from "next/image"
 import { getUser } from "@/lib/actions/auth"
+import { Loader } from "@/components/loader"
+import { useQuery } from "@tanstack/react-query"
+import Link from "next/link"
 
 interface ShippingDetails {
   fullName: string
   address: string
   phone: string
+  email: string
 }
 
 export default function CheckoutPage() {
   const router = useRouter()
   const { items, getTotalPrice, clearCart } = useCartStore()
-  const [isLoading, setIsLoading] = useState(false)
+  const [loading, setLoading] = useState(false)
   const [shippingDetails, setShippingDetails] = useState<ShippingDetails>({
     fullName: "",
     address: "",
     phone: "",
+    email: "",
   })
 
-  // Fetch user details on mount
+  const { data: user, isLoading: isLoadingUser } = useQuery({
+    queryKey: ['user'],
+    queryFn: getUser
+  })
+
+  // Calculate totals
+  const subtotal = items.reduce((total, item) => total + item.price * item.quantity, 0)
+  const shipping = 0 // Free shipping
+  const total = subtotal + shipping
+
+  // Update shipping details from user data when available
   useEffect(() => {
-    const fetchUserDetails = async () => {
-      try {
-        const user = await getUser()
-        if (user) {
-          setShippingDetails({
-            fullName: `${user.prenom} ${user.nom}`,
-            address: user.adresse || "",
-            phone: user.telephone || "",
-          })
-        }
-      } catch (error) {
-        console.error("Failed to fetch user details:", error)
-      }
+    if (user) {
+      setShippingDetails({
+        fullName: `${user.prenom} ${user.nom}`,
+        address: user.adresse || "",
+        phone: user.telephone || "",
+        email: user.email,
+      })
     }
-    fetchUserDetails()
-  }, [])
+  }, [user])
 
   // Redirect to home if cart is empty
   useEffect(() => {
@@ -59,30 +65,83 @@ export default function CheckoutPage() {
     }
   }, [items, router])
 
-  const handleCheckout = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!shippingDetails.fullName || !shippingDetails.address || !shippingDetails.phone) {
+    if (!user) {
+      toast.error("Please log in to complete your purchase")
+      router.push("/login")
+      return
+    }
+
+    if (items.length === 0) {
+      toast.error("Your cart is empty")
+      router.push("/")
+      return
+    }
+
+    // Validate shipping details
+    if (!shippingDetails.fullName || !shippingDetails.address || !shippingDetails.phone || !shippingDetails.email) {
       toast.error("Please fill in all shipping details")
       return
     }
 
-    setIsLoading(true)
     try {
-      const response = await createCheckoutSession(items)
+      setLoading(true)
+
+      // TODO: Implement order creation logic here
+      // const order = await createOrder({
+      //   userId: user.id,
+      //   items,
+      //   shippingDetails,
+      //   total
+      // })
+
+      // Simulate order creation
+      await new Promise(resolve => setTimeout(resolve, 2000))
+
       clearCart()
       toast.success("Order placed successfully!")
-      router.push(`/orders/${response.orderId}`)
+      router.push("/orders")
     } catch (error) {
-      toast.error("Failed to process checkout")
-      console.error("Checkout error:", error)
+      toast.error("Failed to place order. Please try again.")
     } finally {
-      setIsLoading(false)
+      setLoading(false)
     }
   }
 
   if (items.length === 0) {
-    return null // Early return while redirecting
+    return (
+      <div className="flex min-h-screen flex-col">
+        <Header />
+        <main className="flex-1 container mx-auto px-4 py-8">
+          <div className="max-w-2xl mx-auto text-center">
+            <h1 className="text-2xl font-bold mb-4">Your cart is empty</h1>
+            <p className="text-muted-foreground mb-8">
+              Add some items to your cart to proceed with checkout
+            </p>
+            <Button asChild>
+              <Link href="/">Continue Shopping</Link>
+            </Button>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    )
+  }
+
+  if (isLoadingUser) {
+    return (
+      <div className="flex min-h-screen flex-col">
+        <Header />
+        <main className="flex-1 container mx-auto px-4 py-8">
+          <div className="h-[400px]">
+            <Loader size="lg" className="h-full" />
+          </div>
+        </main>
+        <Footer />
+      </div>
+    )
   }
 
   return (
@@ -93,24 +152,24 @@ export default function CheckoutPage() {
           <h1 className="text-3xl font-bold mb-8">Checkout</h1>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Shipping Details Form */}
+            {/* Shipping Details */}
             <div className="space-y-6">
               <Card>
                 <CardHeader>
                   <CardTitle>Shipping Details</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <form className="space-y-4">
+                  <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="fullName">Full Name</Label>
                       <Input
                         id="fullName"
                         value={shippingDetails.fullName}
                         onChange={(e) =>
-                          setShippingDetails({
-                            ...shippingDetails,
+                          setShippingDetails((prev) => ({
+                            ...prev,
                             fullName: e.target.value,
-                          })
+                          }))
                         }
                         required
                       />
@@ -121,10 +180,10 @@ export default function CheckoutPage() {
                         id="address"
                         value={shippingDetails.address}
                         onChange={(e) =>
-                          setShippingDetails({
-                            ...shippingDetails,
+                          setShippingDetails((prev) => ({
+                            ...prev,
                             address: e.target.value,
-                          })
+                          }))
                         }
                         required
                       />
@@ -136,10 +195,25 @@ export default function CheckoutPage() {
                         type="tel"
                         value={shippingDetails.phone}
                         onChange={(e) =>
-                          setShippingDetails({
-                            ...shippingDetails,
+                          setShippingDetails((prev) => ({
+                            ...prev,
                             phone: e.target.value,
-                          })
+                          }))
+                        }
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={shippingDetails.email}
+                        onChange={(e) =>
+                          setShippingDetails((prev) => ({
+                            ...prev,
+                            email: e.target.value,
+                          }))
                         }
                         required
                       />
@@ -153,14 +227,9 @@ export default function CheckoutPage() {
                   <CardTitle>Payment Method</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center gap-3 p-4 border rounded-lg bg-muted/40">
-                    <CreditCard className="h-5 w-5 text-primary" />
-                    <div>
-                      <p className="font-medium">Cash on Delivery</p>
-                      <p className="text-sm text-muted-foreground">
-                        Pay when you receive your order
-                      </p>
-                    </div>
+                  <div className="flex items-center space-x-2">
+                    <Input type="radio" checked readOnly className="w-4 h-4" />
+                    <Label>Cash on Delivery</Label>
                   </div>
                 </CardContent>
               </Card>
@@ -174,78 +243,66 @@ export default function CheckoutPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {items.map((item) => (
-                      <div
-                        key={item.id}
-                        className="flex items-center gap-4 py-4"
-                      >
-                        <div className="relative aspect-square h-16 w-16 min-w-fit overflow-hidden rounded-lg border bg-white">
-                          <Image
-                            src={item.image}
-                            alt={item.name}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-                        <div className="flex flex-1 flex-col">
-                          <span className="font-medium">{item.name}</span>
-                          <span className="text-sm text-muted-foreground">
-                            Quantity: {item.quantity}
-                          </span>
-                        </div>
-                        <div className="text-right">
-                          <span className="font-medium">
+                    {/* Items */}
+                    <div className="space-y-4">
+                      {items.map((item) => (
+                        <div key={item.id} className="flex space-x-4">
+                          <div className="relative w-16 h-16">
+                            <Image
+                              src={item.image}
+                              alt={item.name}
+                              fill
+                              className="object-cover rounded"
+                              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="font-medium">{item.name}</h3>
+                            <p className="text-sm text-muted-foreground">
+                              Quantity: {item.quantity}
+                            </p>
+                          </div>
+                          <p className="font-medium">
                             {formatPrice(item.price * item.quantity)}
-                          </span>
+                          </p>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
 
                     <Separator />
 
-                    <div className="space-y-1.5">
+                    {/* Totals */}
+                    <div className="space-y-2">
                       <div className="flex justify-between">
-                        <span className="font-medium">Subtotal</span>
-                        <span className="font-medium">
-                          {formatPrice(getTotalPrice())}
-                        </span>
+                        <span className="text-muted-foreground">Subtotal</span>
+                        <span>{formatPrice(subtotal)}</span>
                       </div>
-                      <div className="flex justify-between text-muted-foreground">
-                        <span>Shipping</span>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Shipping</span>
                         <span>Free</span>
                       </div>
                       <Separator />
-                      <div className="flex justify-between text-lg font-semibold">
+                      <div className="flex justify-between font-medium">
                         <span>Total</span>
-                        <span>{formatPrice(getTotalPrice())}</span>
+                        <span>{formatPrice(total)}</span>
                       </div>
                     </div>
 
                     <Button
                       className="w-full"
                       size="lg"
-                      onClick={handleCheckout}
-                      disabled={isLoading}
+                      onClick={handleSubmit}
+                      disabled={loading}
                     >
-                      {isLoading ? (
+                      {loading ? (
                         <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          <Loader size="sm" className="mr-2" />
                           Processing...
                         </>
                       ) : (
-                        <>
-                          <ShoppingCart className="mr-2 h-4 w-4" />
-                          Place Order
-                        </>
+                        "Place Order"
                       )}
                     </Button>
-
-                    <p className="text-sm text-muted-foreground text-center">
-                      By placing your order, you agree to our{" "}
-                      <a href="#" className="underline">
-                        Terms and Conditions
-                      </a>
-                    </p>
                   </div>
                 </CardContent>
               </Card>

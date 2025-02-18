@@ -10,24 +10,13 @@ import { useInfiniteQuery } from "@tanstack/react-query"
 import { getPublicProducts } from "@/services/products"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Loader } from "@/components/loader"
-import { useEffect, useRef, useCallback } from 'react'
-import { useRouter } from "next/navigation"
-import { isAuthenticated } from "@/lib/actions/auth"
+import { useInView } from "react-intersection-observer"
+import { useEffect } from "react"
 
 const categories = ["All", "Electronics", "Sports", "Accessories", "Fashion"]
 
 export default function Home() {
-  const router = useRouter()
-
-  // Check authentication on mount
-  useEffect(() => {
-    const checkAuth = async () => {
-      const isAuth = await isAuthenticated()
-      // You can add additional auth validation here if needed
-      // For example, redirect to specific pages based on auth status
-    }
-    checkAuth()
-  }, [])
+  const { ref, inView } = useInView()
 
   const {
     data,
@@ -42,37 +31,14 @@ export default function Home() {
       return lastPage.hasMore ? lastPage.currentPage + 1 : undefined
     },
     initialPageParam: 1,
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   })
 
-  // Intersection Observer setup
-  const observerTarget = useRef<HTMLDivElement>(null)
-
-  const handleObserver = useCallback(
-    (entries: IntersectionObserverEntry[]) => {
-      const [target] = entries
-      if (target.isIntersecting && hasNextPage && !isFetchingNextPage) {
-        fetchNextPage()
-      }
-    },
-    [fetchNextPage, hasNextPage, isFetchingNextPage]
-  )
-
   useEffect(() => {
-    const element = observerTarget.current
-    if (!element) return
-
-    const observer = new IntersectionObserver(handleObserver, {
-      threshold: 0.1,
-    })
-
-    observer.observe(element)
-
-    return () => {
-      if (element) {
-        observer.unobserve(element)
-      }
+    if (inView && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage()
     }
-  }, [handleObserver])
+  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage])
 
   // Flatten all products from all pages
   const products = data?.pages.flatMap(page => page.items) ?? []
@@ -141,7 +107,7 @@ export default function Home() {
               </div>
 
               {/* Loading indicator and observer target */}
-              <div ref={observerTarget} className="mt-8">
+              <div ref={ref} className="mt-8">
                 {isFetchingNextPage && (
                   <div className="space-y-8">
                     <div className="flex justify-center">

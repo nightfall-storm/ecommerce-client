@@ -12,6 +12,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Loader } from "@/components/loader"
 
 interface ProductDialogProps {
   open: boolean
@@ -167,7 +168,14 @@ export function ProductDialog({
           </div>
           <DialogFooter>
             <Button type="submit" disabled={loading}>
-              {loading ? "Saving..." : "Save"}
+              {loading ? (
+                <>
+                  <Loader size="sm" className="mr-2" />
+                  Saving...
+                </>
+              ) : (
+                "Save"
+              )}
             </Button>
           </DialogFooter>
         </form>

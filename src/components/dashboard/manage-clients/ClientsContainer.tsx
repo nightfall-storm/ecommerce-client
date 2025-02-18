@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query"
 import { getClients } from "@/services/clients"
 import { columns } from "./columns"
 import { DataTable } from "./data-table"
-import { Loader2 } from "lucide-react"
+import { Loader } from "@/components/loader"
 
 export function ClientsContainer() {
   const { data: clients, isLoading } = useQuery({
@@ -14,14 +14,17 @@ export function ClientsContainer() {
 
   if (isLoading) {
     return (
-      <div className="flex h-[200px] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="h-[400px]">
+        <Loader size="lg" className="h-full" />
       </div>
     )
   }
 
   return (
     <div className="container mx-auto py-10">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Clients</h1>
+      </div>
       <DataTable columns={columns} data={clients || []} />
     </div>
   )
