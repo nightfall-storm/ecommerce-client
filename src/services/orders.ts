@@ -54,6 +54,16 @@ export const getOrders = async (clientId: number): Promise<Order[]> => {
   }
 }
 
+export const getOrder = async (orderId: number): Promise<Order> => {
+  try {
+    const response = await api.get<Order>(`/Orders/${orderId}`)
+    return response.data
+  } catch (error) {
+    console.error('API Error:', error)
+    throw new Error('Failed to fetch order')
+  }
+}
+
 export const getOrderDetails = async (orderId: number): Promise<OrderDetail[]> => {
   try {
     const response = await api.get<OrderDetail[]>(`/OrderDetails/Order/${orderId}`)

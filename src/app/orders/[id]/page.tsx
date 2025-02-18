@@ -3,13 +3,14 @@
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { useQuery } from "@tanstack/react-query"
-import { getOrderDetails } from "@/services/orders"
+import { getOrderDetails, getOrder } from "@/services/orders"
 import { formatPrice } from "@/lib/utils"
 import { Loader2, Package, Calendar, Clock, CheckCircle2 } from "lucide-react"
 import Image from "next/image"
 import { Separator } from "@/components/ui/separator"
 import { use } from "react"
 import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
 
 interface OrderPageProps {
   params: Promise<{
@@ -17,8 +18,29 @@ interface OrderPageProps {
   }>
 }
 
+const getStatusColor = (status: string) => {
+  switch (status.toLowerCase()) {
+    case 'pending':
+      return 'text-yellow-600 bg-yellow-50 border-yellow-200'
+    case 'processing':
+      return 'text-blue-600 bg-blue-50 border-blue-200'
+    case 'completed':
+      return 'text-green-600 bg-green-50 border-green-200'
+    case 'cancelled':
+      return 'text-red-600 bg-red-50 border-red-200'
+    default:
+      return 'text-gray-600 bg-gray-50 border-gray-200'
+  }
+}
+
 export default function OrderPage({ params }: OrderPageProps) {
   const { id } = use(params)
+
+  const { data: order } = useQuery({
+    queryKey: ['order', id],
+    queryFn: () => getOrder(parseInt(id)),
+    enabled: !!id
+  })
 
   const { data: orderDetails, isLoading, error } = useQuery({
     queryKey: ['orderDetails', id],
@@ -75,12 +97,13 @@ export default function OrderPage({ params }: OrderPageProps) {
               {/* Order Status Card */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-card rounded-lg p-6 shadow-sm border flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Package className="h-6 w-6 text-primary" />
+                  <div className={cn("h-12 w-12 rounded-full flex items-center justify-center",
+                    order?.statut ? getStatusColor(order.statut) : "bg-primary/10")}>
+                    <Package className="h-6 w-6" />
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Status</p>
-                    <p className="font-medium">Processing</p>
+                    <p className="font-medium capitalize">{order?.statut || 'Pending'}</p>
                   </div>
                 </div>
                 <div className="bg-card rounded-lg p-6 shadow-sm border flex items-center gap-4">
@@ -89,7 +112,11 @@ export default function OrderPage({ params }: OrderPageProps) {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Order Date</p>
-                    <p className="font-medium">{new Date().toLocaleDateString()}</p>
+                    <p className="font-medium">
+                      {order?.dateCommande
+                        ? new Date(order.dateCommande).toLocaleDateString()
+                        : new Date().toLocaleDateString()}
+                    </p>
                   </div>
                 </div>
                 <div className="bg-card rounded-lg p-6 shadow-sm border flex items-center gap-4">
@@ -156,9 +183,10 @@ export default function OrderPage({ params }: OrderPageProps) {
                         )}
                       </p>
                     </div>
-                    <div className="flex items-center gap-2 text-primary">
+                    <div className={cn("flex items-center gap-2 px-4 py-2 rounded-full border",
+                      order?.statut ? getStatusColor(order.statut) : "text-primary")}>
                       <CheckCircle2 className="h-5 w-5" />
-                      <span className="font-medium">Order Confirmed</span>
+                      <span className="font-medium capitalize">{order?.statut || 'Pending'}</span>
                     </div>
                   </div>
                 </div>
