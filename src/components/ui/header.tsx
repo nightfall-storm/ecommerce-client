@@ -2,7 +2,6 @@ import Link from "next/link"
 import { ShoppingCart, User } from "lucide-react"
 import { Button } from "./button"
 import { SearchBar } from "./search-bar"
-import { ThemeToggle } from "./theme-toggle"
 
 export function Header() {
   return (
@@ -23,7 +22,6 @@ export function Header() {
           <Button variant="ghost" size="icon">
             <User className="h-5 w-5" />
           </Button>
-          <ThemeToggle />
         </nav>
       </div>
     </header>
