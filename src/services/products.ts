@@ -8,51 +8,78 @@ export interface Product {
   stock: number
   imageURL: string
   categorieID: number
+  orderDetails?: OrderDetail[]
 }
 
-export interface ProductsResponse {
-  items: Product[]
-  hasMore: boolean
-  total: number
+export interface OrderDetail {
+  id: number
+  commandeID: number
+  produitID: number
+  quantite: number
+  prixUnitaire: number
+  order: {
+    id: number
+    clientID: number
+    dateCommande: string
+    statut: string
+    total: number
+  }
+  product: string
 }
 
-// Helper function to simulate network delay
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
-
-export const getProducts = async (page: number = 1, limit: number = 8): Promise<ProductsResponse> => {
+export const getProducts = async (): Promise<Product[]> => {
   try {
-    // Add artificial delay
-    await delay(2000)
-
-    const response = await api.get<Product[]>('/products')
-    const products = response.data
-    const startIndex = (page - 1) * limit
-    const endIndex = startIndex + limit
-    const paginatedProducts = products.slice(startIndex, endIndex)
-
-    return {
-      items: paginatedProducts,
-      hasMore: endIndex < products.length,
-      total: products.length
-    }
+    const response = await api.get<Product[]>('/Products')
+    return response.data
   } catch (error) {
     console.error('API Error:', error)
-    if (error instanceof Error) {
-      throw new Error(`Failed to fetch products: ${error.message}`)
-    }
     throw new Error('Failed to fetch products')
   }
 }
 
 export const getProduct = async (id: number): Promise<Product> => {
   try {
-    const response = await api.get<Product>(`/products/${id}`)
+    const response = await api.get<Product>(`/Products/${id}`)
     return response.data
   } catch (error) {
     console.error('API Error:', error)
-    if (error instanceof Error) {
-      throw new Error(`Failed to fetch product: ${error.message}`)
-    }
     throw new Error('Failed to fetch product')
+  }
+}
+
+export const createProduct = async (productData: FormData): Promise<Product> => {
+  try {
+    const response = await api.post<Product>('/Products', productData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+    return response.data
+  } catch (error) {
+    console.error('API Error:', error)
+    throw new Error('Failed to create product')
+  }
+}
+
+export const updateProduct = async (id: number, productData: FormData): Promise<Product> => {
+  try {
+    const response = await api.patch<Product>(`/Products/${id}`, productData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+    return response.data
+  } catch (error) {
+    console.error('API Error:', error)
+    throw new Error('Failed to update product')
+  }
+}
+
+export const deleteProduct = async (id: number): Promise<void> => {
+  try {
+    await api.delete(`/Products/${id}`)
+  } catch (error) {
+    console.error('API Error:', error)
+    throw new Error('Failed to delete product')
   }
 }
