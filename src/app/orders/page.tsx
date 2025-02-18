@@ -113,7 +113,9 @@ export default function OrdersPage() {
             </div>
           ) : (
             <div className="space-y-6">
-              {ordersWithDetails.map((order: OrderWithDetails) => (
+              {ordersWithDetails
+                .sort((a, b) => new Date(b.dateCommande).getTime() - new Date(a.dateCommande).getTime())
+                .map((order: OrderWithDetails) => (
                 <div
                   key={order.id}
                   className="border rounded-lg overflow-hidden bg-card"
