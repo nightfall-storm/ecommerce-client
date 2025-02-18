@@ -57,6 +57,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/40">
+
       <div className="relative w-full max-w-lg">
         {/* Decorative elements */}
         <div className="absolute inset-0 grid grid-cols-2 -space-x-52 opacity-40">

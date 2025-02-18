@@ -11,10 +11,19 @@ import { getPublicProducts } from "@/services/products"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Loader } from "@/components/loader"
 import { useEffect, useRef, useCallback } from 'react'
+import { useRouter } from "next/navigation"
 
 const categories = ["All", "Electronics", "Sports", "Accessories", "Fashion"]
 
 export default function Home() {
+  const router = useRouter()
+
+  // Check authentication on mount
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken")
+    // You can add additional token validation here if needed
+  }, [])
+
   const {
     data,
     fetchNextPage,

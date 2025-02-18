@@ -5,6 +5,9 @@ import { Separator } from "@/components/ui/separator";
 import { DashboardSidebar } from "@/components/shared/DashboardSidebar";
 import { DashboardBreadcrumb } from "@/components/shared/DashboardBreadcrumb";
 
+// TODO: Implement Middleware for auth and redirects
+
+
 interface DashboardLayoutProps {
   children: React.ReactNode;
 }
