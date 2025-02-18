@@ -2,6 +2,7 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import Image from "next/image"
+import Link from "next/link"
 
 interface ProductCardProps {
   product: {
@@ -26,32 +27,36 @@ export function ProductCard({ product }: ProductCardProps) {
     : fallbackImage
 
   return (
-    <Card className="flex flex-col justify-between overflow-hidden transition-all hover:shadow-lg">
-      <CardHeader className="p-0">
-        <div className="aspect-square relative overflow-hidden">
-          <Image
-            src={imageUrl}
-            alt={product.name}
-            fill
-            className="object-cover transition-all hover:scale-105"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          />
-        </div>
-      </CardHeader>
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between">
-          <div>
-            <h3 className="font-semibold text-lg">{product.name}</h3>
-            <Badge variant="secondary" className="mt-2">
-              {product.category}
-            </Badge>
+    <Link href={`/products/${product.id}?id=${product.id}`} className="block group">
+      <Card className="flex flex-col justify-between overflow-hidden transition-all hover:shadow-lg">
+        <CardHeader className="p-0">
+          <div className="aspect-square relative overflow-hidden">
+            <Image
+              src={imageUrl}
+              alt={product.name}
+              fill
+              className="object-cover transition-all group-hover:scale-105"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            />
           </div>
-          <p className="font-bold text-lg">${product.price}</p>
-        </div>
-      </CardContent>
-      <CardFooter className="p-4 pt-0">
-        <Button className="w-full">Add to Cart</Button>
-      </CardFooter>
-    </Card>
+        </CardHeader>
+        <CardContent className="p-4">
+          <div className="flex items-start justify-between">
+            <div>
+              <h3 className="font-semibold text-lg group-hover:text-primary transition-colors">
+                {product.name}
+              </h3>
+              <Badge variant="secondary" className="mt-2">
+                {product.category}
+              </Badge>
+            </div>
+            <p className="font-bold text-lg">${product.price}</p>
+          </div>
+        </CardContent>
+        <CardFooter className="p-4 pt-0">
+          <Button className="w-full">View Details</Button>
+        </CardFooter>
+      </Card>
+    </Link>
   )
 }
