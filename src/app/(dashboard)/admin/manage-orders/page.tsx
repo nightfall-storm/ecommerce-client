@@ -1,9 +1,7 @@
-
+import { OrdersContainer } from "@/components/dashboard/manage-orders/OrdersContainer"
 
 export default function ManageOrdersPage() {
   return (
-    <div>
-      manage orders
-    </div>
+      <OrdersContainer />
   )
 }
