@@ -12,6 +12,7 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
+  FilterFn,
 } from "@tanstack/react-table"
 
 import {
@@ -36,6 +37,13 @@ interface DataTableProps<TData, TValue> {
   data: TData[]
 }
 
+// Define the numeric filter function
+const numericFilter: FilterFn<any> = (row, columnId, value) => {
+  const rowValue = String(row.getValue(columnId)).replace('#', '')
+  const searchValue = String(value).replace('#', '')
+  return rowValue.includes(searchValue)
+}
+
 export function DataTable<TData, TValue>({
   columns,
   data,
@@ -55,6 +63,9 @@ export function DataTable<TData, TValue>({
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
+    filterFns: {
+      numeric: numericFilter,
+    },
     state: {
       sorting,
       columnFilters,
@@ -66,11 +77,13 @@ export function DataTable<TData, TValue>({
     <div>
       <div className="flex items-center py-4">
         <Input
-          placeholder="Filter orders..."
+          placeholder="Filter by Order ID..."
           value={(table.getColumn("id")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("id")?.setFilterValue(event.target.value)
-          }
+          onChange={(event) => {
+            const value = event.target.value
+            // Remove the '#' if present and filter
+            table.getColumn("id")?.setFilterValue(value.replace('#', ''))
+          }}
           className="max-w-sm"
         />
         <DropdownMenu>

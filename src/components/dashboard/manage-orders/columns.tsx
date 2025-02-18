@@ -1,6 +1,6 @@
 "use client"
 
-import { ColumnDef } from "@tanstack/react-table"
+import { ColumnDef, FilterFn } from "@tanstack/react-table"
 import { Order, OrderStatus, updateOrderStatus } from "@/services/orders"
 import { Badge } from "@/components/ui/badge"
 import { DataTableColumnHeader } from "./data-table-column-header"
@@ -22,6 +22,13 @@ import { formatPrice } from "@/lib/utils"
 import { useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 
+// Define a type-safe filter function
+const numericFilter: FilterFn<Order> = (row, columnId, value) => {
+  const rowValue = String(row.getValue(columnId)).replace('#', '')
+  const searchValue = String(value).replace('#', '')
+  return rowValue.includes(searchValue)
+}
+
 export const columns: ColumnDef<Order>[] = [
   {
     accessorKey: "id",
@@ -29,6 +36,7 @@ export const columns: ColumnDef<Order>[] = [
       <DataTableColumnHeader column={column} title="Order ID" />
     ),
     cell: ({ row }) => <div className="font-medium">#{row.getValue("id")}</div>,
+    filterFn: numericFilter,
   },
   {
     accessorKey: "clientID",
