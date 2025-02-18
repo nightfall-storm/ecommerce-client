@@ -48,9 +48,8 @@ export const createOrder = async (orderData: CreateOrderRequest): Promise<Order>
 
 export const getOrders = async (clientId?: number): Promise<Order[]> => {
   try {
-    // If clientId is provided, get orders for that client
-    // Otherwise get all orders (admin view)
-    const endpoint = clientId ? `/api/Clients/${clientId}/orders` : '/api/Orders'
+    // Updated endpoint to use the correct client orders endpoint
+    const endpoint = clientId ? `/api/Orders/Client/${clientId}` : '/api/Orders'
     const response = await api.get<Order[]>(endpoint)
     return response.data
   } catch (error) {
@@ -71,6 +70,7 @@ export const getOrder = async (orderId: number): Promise<Order> => {
 
 export const getOrderDetails = async (orderId: number): Promise<OrderDetail[]> => {
   try {
+    // Updated to use the correct order details endpoint
     const response = await api.get<OrderDetail[]>(`/OrderDetails/Order/${orderId}`)
     return response.data
   } catch (error) {
@@ -81,7 +81,7 @@ export const getOrderDetails = async (orderId: number): Promise<OrderDetail[]> =
 
 export const updateOrderStatus = async (orderId: number, status: OrderStatus): Promise<Order> => {
   try {
-    const response = await api.patch<Order>(`/api/Orders/${orderId}/status`, {
+    const response = await api.patch<Order>(`/api/Orders/${orderId}`, {
       status: status
     })
     return response.data
@@ -97,5 +97,55 @@ export const deleteOrder = async (orderId: number): Promise<void> => {
   } catch (error) {
     console.error('API Error:', error)
     throw new Error('Failed to delete order')
+  }
+}
+
+// Add new functions for order details management
+export const createOrderDetail = async (orderDetail: Omit<OrderDetail, 'id'>): Promise<OrderDetail> => {
+  try {
+    const response = await api.post<OrderDetail>('/OrderDetails', orderDetail)
+    return response.data
+  } catch (error) {
+    console.error('API Error:', error)
+    throw new Error('Failed to create order detail')
+  }
+}
+
+export const updateOrderDetail = async (id: number, data: Partial<OrderDetail>): Promise<OrderDetail> => {
+  try {
+    const response = await api.patch<OrderDetail>(`/OrderDetails/${id}`, data)
+    return response.data
+  } catch (error) {
+    console.error('API Error:', error)
+    throw new Error('Failed to update order detail')
+  }
+}
+
+export const deleteOrderDetail = async (id: number): Promise<void> => {
+  try {
+    await api.delete(`/OrderDetails/${id}`)
+  } catch (error) {
+    console.error('API Error:', error)
+    throw new Error('Failed to delete order detail')
+  }
+}
+
+export const getAllOrderDetails = async (): Promise<OrderDetail[]> => {
+  try {
+    const response = await api.get<OrderDetail[]>('/OrderDetails')
+    return response.data
+  } catch (error) {
+    console.error('API Error:', error)
+    throw new Error('Failed to fetch all order details')
+  }
+}
+
+export const getOrderDetailById = async (id: number): Promise<OrderDetail> => {
+  try {
+    const response = await api.get<OrderDetail>(`/OrderDetails/${id}`)
+    return response.data
+  } catch (error) {
+    console.error('API Error:', error)
+    throw new Error('Failed to fetch order detail')
   }
 }

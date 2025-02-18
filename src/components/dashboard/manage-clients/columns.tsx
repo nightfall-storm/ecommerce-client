@@ -4,7 +4,7 @@ import { ColumnDef } from "@tanstack/react-table"
 import { Client, deleteClient, updateClient } from "@/services/clients"
 import { DataTableColumnHeader } from "./data-table-column-header"
 import { Button } from "@/components/ui/button"
-import { MoreHorizontal, Pencil, Trash2, User } from "lucide-react"
+import { MoreHorizontal, Pencil, Trash2, User, ShoppingBag } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,6 +38,17 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useState } from "react"
+import { getOrders, getOrderDetails, Order, OrderDetail } from "@/services/orders"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import { Badge } from "@/components/ui/badge"
+import { Loader2 } from "lucide-react"
+import { formatPrice } from "@/lib/utils"
+import Image from "next/image"
+
+interface OrderWithDetails extends Order {
+  details?: OrderDetail[]
+}
 
 export const columns: ColumnDef<Client>[] = [
   {
@@ -81,6 +92,9 @@ export const columns: ColumnDef<Client>[] = [
       const client = row.original
       const queryClient = useQueryClient()
       const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+      const [isOrdersDialogOpen, setIsOrdersDialogOpen] = useState(false)
+      const [orders, setOrders] = useState<OrderWithDetails[]>([])
+      const [isLoadingOrders, setIsLoadingOrders] = useState(false)
       const [editForm, setEditForm] = useState({
         nom: client.nom,
         prenom: client.prenom,
@@ -88,6 +102,25 @@ export const columns: ColumnDef<Client>[] = [
         adresse: client.adresse,
         telephone: client.telephone,
       })
+
+      const handleViewOrders = async () => {
+        setIsOrdersDialogOpen(true)
+        setIsLoadingOrders(true)
+        try {
+          const clientOrders = await getOrders(client.id)
+          const ordersWithDetails = await Promise.all(
+            clientOrders.map(async (order) => {
+              const details = await getOrderDetails(order.id)
+              return { ...order, details }
+            })
+          )
+          setOrders(ordersWithDetails)
+        } catch (error) {
+          toast.error("Failed to fetch orders")
+        } finally {
+          setIsLoadingOrders(false)
+        }
+      }
 
       const handleDelete = async () => {
         try {
@@ -120,6 +153,13 @@ export const columns: ColumnDef<Client>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
+            <DropdownMenuItem onSelect={(e) => {
+              e.preventDefault()
+              handleViewOrders()
+            }}>
+              <ShoppingBag className="mr-2 h-4 w-4" />
+              View Orders
+            </DropdownMenuItem>
             <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
               <DialogTrigger asChild>
                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
@@ -240,6 +280,104 @@ export const columns: ColumnDef<Client>[] = [
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
+            <Dialog open={isOrdersDialogOpen} onOpenChange={setIsOrdersDialogOpen}>
+              <DialogContent className="max-w-3xl">
+                <DialogHeader>
+                  <DialogTitle>Orders for {client.prenom} {client.nom}</DialogTitle>
+                  <DialogDescription>
+                    View all orders and their details for this client.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="mt-4">
+                  {isLoadingOrders ? (
+                    <div className="flex h-[200px] items-center justify-center">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    </div>
+                  ) : orders.length === 0 ? (
+                    <div className="text-center text-muted-foreground py-8">
+                      No orders found for this client.
+                    </div>
+                  ) : (
+                    <ScrollArea className="h-[500px]">
+                      <Accordion type="single" collapsible className="w-full">
+                        {orders.map((order) => (
+                          <AccordionItem key={order.id} value={order.id.toString()}>
+                            <AccordionTrigger className="px-4">
+                              <div className="flex items-center gap-4">
+                                <span>Order #{order.id}</span>
+                                <Badge
+                                  variant="outline"
+                                  className={
+                                    order.statut.toLowerCase() === "completed"
+                                      ? "bg-green-100 text-green-800 border-green-200"
+                                      : order.statut.toLowerCase() === "processing"
+                                      ? "bg-blue-100 text-blue-800 border-blue-200"
+                                      : order.statut.toLowerCase() === "pending"
+                                      ? "bg-yellow-100 text-yellow-800 border-yellow-200"
+                                      : "bg-red-100 text-red-800 border-red-200"
+                                  }
+                                >
+                                  {order.statut}
+                                </Badge>
+                                <span className="text-muted-foreground">
+                                  {new Date(order.dateCommande).toLocaleDateString()}
+                                </span>
+                                <span className="font-medium">
+                                  {formatPrice(order.total)}
+                                </span>
+                              </div>
+                            </AccordionTrigger>
+                            <AccordionContent className="px-4">
+                              <div className="space-y-4">
+                                {order.details?.map((detail) => (
+                                  <div
+                                    key={detail.id}
+                                    className="flex items-center gap-4 p-4 rounded-lg bg-muted/40"
+                                  >
+                                    <div className="relative aspect-square h-16 w-16 min-w-fit overflow-hidden rounded-lg border bg-white">
+                                      <Image
+                                        src={detail.product.imageURL}
+                                        alt={detail.product.nom}
+                                        fill
+                                        className="object-cover"
+                                      />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <h4 className="font-medium truncate">
+                                        {detail.product.nom}
+                                      </h4>
+                                      <div className="flex items-center gap-4 mt-1 text-muted-foreground">
+                                        <p className="text-sm">
+                                          Unit Price: {formatPrice(detail.prixUnitaire)}
+                                        </p>
+                                        <span className="text-sm">•</span>
+                                        <p className="text-sm">
+                                          Quantity: {detail.quantite}
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <div className="text-right">
+                                      <p className="font-medium">
+                                        {formatPrice(detail.prixUnitaire * detail.quantite)}
+                                      </p>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </AccordionContent>
+                          </AccordionItem>
+                        ))}
+                      </Accordion>
+                    </ScrollArea>
+                  )}
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsOrdersDialogOpen(false)}>
+                    Close
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </DropdownMenuContent>
         </DropdownMenu>
       )
