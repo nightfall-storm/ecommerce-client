@@ -1,15 +1,15 @@
 "use client"
 
-import { Header } from "@/components/ui/header"
-import { Hero } from "@/components/ui/hero"
-import { ProductCard } from "@/components/ui/product-card"
-import { Footer } from "@/components/ui/footer"
+import { Header } from "@/components/header"
+import { Hero } from "@/components/hero"
+import { ProductCard } from "@/components/product-card"
+import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Filter } from "lucide-react"
 import { useInfiniteQuery } from "@tanstack/react-query"
 import { getProducts } from "@/services/products"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Loader } from "@/components/ui/loader"
+import { Loader } from "@/components/loader"
 import { useEffect, useRef, useCallback } from 'react'
 
 const categories = ["All", "Electronics", "Sports", "Accessories", "Fashion"]
