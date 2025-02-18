@@ -6,43 +6,27 @@ import { ProductCard } from "@/components/ui/product-card"
 import { Footer } from "@/components/ui/footer"
 import { Button } from "@/components/ui/button"
 import { Filter } from "lucide-react"
-
-// Temporary mock data
-const MOCK_PRODUCTS = [
-  {
-    id: "1",
-    name: "Wireless Headphones",
-    price: 199.99,
-    image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80",
-    category: "Electronics"
-  },
-  {
-    id: "2",
-    name: "Smart Watch",
-    price: 299.99,
-    image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&q=80",
-    category: "Electronics"
-  },
-  {
-    id: "3",
-    name: "Running Shoes",
-    price: 89.99,
-    image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500&q=80",
-    category: "Sports"
-  },
-  {
-    id: "4",
-    name: "Backpack",
-    price: 59.99,
-    image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500&q=80",
-    category: "Accessories"
-  },
-  // Add more mock products as needed
-]
+import { useQuery } from "@tanstack/react-query"
+import { getProducts } from "@/services/products"
+import { Skeleton } from "@/components/ui/skeleton"
 
 const categories = ["All", "Electronics", "Sports", "Accessories", "Fashion"]
 
 export default function Home() {
+  const { data: products, isLoading, error } = useQuery({
+    queryKey: ['products'],
+    queryFn: async () => {
+      try {
+        const data = await getProducts()
+        return data
+      } catch (error) {
+        console.error('Error fetching products:', error)
+        throw error
+      }
+    },
+    retry: false
+  })
+
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
@@ -70,11 +54,37 @@ export default function Home() {
             ))}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {MOCK_PRODUCTS.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+          {isLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {[...Array(4)].map((_, index) => (
+                <div key={index} className="space-y-4">
+                  <Skeleton className="h-[200px] w-full" />
+                  <Skeleton className="h-4 w-[250px]" />
+                  <Skeleton className="h-4 w-[200px]" />
+                </div>
+              ))}
+            </div>
+          ) : error ? (
+            <div className="text-center text-red-500">
+              <p>Error loading products. Please try again later.</p>
+              <p className="text-sm mt-2">{(error as Error).message}</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {products?.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={{
+                    id: product.id.toString(),
+                    name: product.nom,
+                    price: product.prix,
+                    image: product.imageURL || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80',
+                    category: `Category ${product.categorieID}`
+                  }}
+                />
+              ))}
+            </div>
+          )}
 
           <div className="mt-12 text-center">
             <Button size="lg">Load More</Button>

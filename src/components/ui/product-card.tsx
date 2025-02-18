@@ -13,16 +13,28 @@ interface ProductCardProps {
   }
 }
 
+const fallbackImage = "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80"
+
 export function ProductCard({ product }: ProductCardProps) {
+  // Ensure image URL is absolute and handle potential undefined/null values
+  const imageUrl = product.image && typeof product.image === 'string'
+    ? product.image.startsWith('http')
+      ? product.image
+      : product.image.startsWith('/')
+        ? `${process.env.NEXT_PUBLIC_API_URL}${product.image}`
+        : fallbackImage
+    : fallbackImage
+
   return (
     <Card className="flex flex-col justify-between overflow-hidden transition-all hover:shadow-lg">
       <CardHeader className="p-0">
         <div className="aspect-square relative overflow-hidden">
           <Image
-            src={product.image}
+            src={imageUrl}
             alt={product.name}
             fill
             className="object-cover transition-all hover:scale-105"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
         </div>
       </CardHeader>
