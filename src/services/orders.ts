@@ -90,3 +90,12 @@ export const updateOrderStatus = async (orderId: number, status: OrderStatus): P
     throw new Error('Failed to update order status')
   }
 }
+
+export const deleteOrder = async (orderId: number): Promise<void> => {
+  try {
+    await api.delete(`/api/Orders/${orderId}`)
+  } catch (error) {
+    console.error('API Error:', error)
+    throw new Error('Failed to delete order')
+  }
+}

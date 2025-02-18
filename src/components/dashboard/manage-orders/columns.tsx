@@ -1,11 +1,11 @@
 "use client"
 
 import { ColumnDef, FilterFn } from "@tanstack/react-table"
-import { Order, OrderStatus, updateOrderStatus } from "@/services/orders"
+import { Order, OrderStatus, updateOrderStatus, deleteOrder } from "@/services/orders"
 import { Badge } from "@/components/ui/badge"
 import { DataTableColumnHeader } from "./data-table-column-header"
 import { Button } from "@/components/ui/button"
-import { MoreHorizontal, CheckCircle, XCircle, Clock } from "lucide-react"
+import { MoreHorizontal, CheckCircle, XCircle, Clock, Trash2 } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,6 +21,17 @@ import Link from "next/link"
 import { formatPrice } from "@/lib/utils"
 import { useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 // Define a type-safe filter function
 const numericFilter: FilterFn<Order> = (row, columnId, value) => {
@@ -102,11 +113,20 @@ export const columns: ColumnDef<Order>[] = [
       const handleStatusUpdate = async (newStatus: OrderStatus) => {
         try {
           await updateOrderStatus(order.id, newStatus)
-          // Invalidate and refetch orders
           await queryClient.invalidateQueries({ queryKey: ["orders"] })
           toast.success(`Order status updated to ${newStatus}`)
         } catch (error) {
           toast.error("Failed to update order status")
+        }
+      }
+
+      const handleDelete = async () => {
+        try {
+          await deleteOrder(order.id)
+          await queryClient.invalidateQueries({ queryKey: ["orders"] })
+          toast.success("Order deleted successfully")
+        } catch (error) {
+          toast.error("Failed to delete order")
         }
       }
 
@@ -152,6 +172,36 @@ export const columns: ColumnDef<Order>[] = [
                 </DropdownMenuItem>
               </DropdownMenuSubContent>
             </DropdownMenuSub>
+            <DropdownMenuSeparator />
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <DropdownMenuItem
+                  onSelect={(e) => e.preventDefault()}
+                  className="text-red-600"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete Order
+                </DropdownMenuItem>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete the
+                    order #{order.id} and remove all associated data.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleDelete}
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </DropdownMenuContent>
         </DropdownMenu>
       )
