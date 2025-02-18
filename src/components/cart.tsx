@@ -8,50 +8,32 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
-import { ShoppingCart, Trash2, Plus, Minus, Loader2 } from "lucide-react"
+import { ShoppingCart, Trash2, Plus, Minus } from "lucide-react"
 import { useCartStore } from "@/lib/store/cart"
 import Image from "next/image"
 import { Separator } from "@/components/ui/separator"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { formatPrice } from "@/lib/utils"
 import { useEffect, useState } from "react"
-import { createCheckoutSession } from "@/services/checkout"
-import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 
 export function Cart() {
   const router = useRouter()
-  const { items, removeItem, updateQuantity, getTotalItems, getTotalPrice, clearCart } = useCartStore()
+  const { items, removeItem, updateQuantity, getTotalItems, getTotalPrice } = useCartStore()
   const [mounted, setMounted] = useState(false)
-  const [isCheckingOut, setIsCheckingOut] = useState(false)
+  const [isOpen, setIsOpen] = useState(false)
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  const handleCheckout = async () => {
-    try {
-      setIsCheckingOut(true)
-      const response = await createCheckoutSession(items)
-
-      // Clear the cart after successful checkout
-      clearCart()
-
-      // Show success message
-      toast.success('Order placed successfully!')
-
-      // Redirect to order page using dynamic route
-      router.push(`/orders/${response.orderId}`)
-    } catch (error) {
-      toast.error('Failed to process checkout')
-      console.error('Checkout error:', error)
-    } finally {
-      setIsCheckingOut(false)
-    }
+  const handleCheckout = () => {
+    setIsOpen(false) // Close the cart sheet
+    router.push('/checkout') // Navigate to checkout page
   }
 
   return (
-    <Sheet>
+    <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
           <ShoppingCart className="h-5 w-5" />
@@ -138,16 +120,8 @@ export function Cart() {
               <Button
                 className="w-full"
                 onClick={handleCheckout}
-                disabled={isCheckingOut}
               >
-                {isCheckingOut ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  'Checkout'
-                )}
+                Proceed to Checkout
               </Button>
             </div>
           </>
