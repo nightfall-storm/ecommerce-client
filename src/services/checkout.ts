@@ -34,7 +34,7 @@ export interface CheckoutResponse {
 
 export const createCheckoutSession = async (items: CartItem[]): Promise<CheckoutResponse> => {
   try {
-    const clientId = 1
+    const clientId = 19
     const total = items.reduce((total, item) => total + (item.price * item.quantity), 0)
 
     // First, create the order

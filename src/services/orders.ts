@@ -36,7 +36,7 @@ export interface CreateOrderRequest {
 
 export const createOrder = async (orderData: CreateOrderRequest): Promise<Order> => {
   try {
-    const response = await api.post<Order>('/Orders', orderData)
+    const response = await api.post<Order>('/api/Orders', orderData)
     return response.data
   } catch (error) {
     console.error('API Error:', error)
@@ -44,9 +44,12 @@ export const createOrder = async (orderData: CreateOrderRequest): Promise<Order>
   }
 }
 
-export const getOrders = async (clientId: number): Promise<Order[]> => {
+export const getOrders = async (clientId?: number): Promise<Order[]> => {
   try {
-    const response = await api.get<Order[]>(`/Clients/${clientId}/orders`)
+    // If clientId is provided, get orders for that client
+    // Otherwise get all orders (admin view)
+    const endpoint = clientId ? `/api/Clients/${clientId}/orders` : '/api/Orders'
+    const response = await api.get<Order[]>(endpoint)
     return response.data
   } catch (error) {
     console.error('API Error:', error)
@@ -56,7 +59,7 @@ export const getOrders = async (clientId: number): Promise<Order[]> => {
 
 export const getOrder = async (orderId: number): Promise<Order> => {
   try {
-    const response = await api.get<Order>(`/Orders/${orderId}`)
+    const response = await api.get<Order>(`/api/Orders/${orderId}`)
     return response.data
   } catch (error) {
     console.error('API Error:', error)
