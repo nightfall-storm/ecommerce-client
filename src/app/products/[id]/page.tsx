@@ -11,11 +11,14 @@ import { Minus, Plus, ShoppingCart } from "lucide-react"
 import Image from "next/image"
 import { useState } from "react"
 import { useSearchParams } from "next/navigation"
+import { useCartStore } from "@/lib/store/cart"
+import { toast } from "sonner"
 
 export default function ProductPage() {
   const searchParams = useSearchParams()
   const id = searchParams.get('id')
   const [quantity, setQuantity] = useState(1)
+  const addItem = useCartStore((state) => state.addItem)
 
   const { data: product, isLoading, error } = useQuery({
     queryKey: ['product', id],
@@ -24,8 +27,17 @@ export default function ProductPage() {
   })
 
   const handleAddToCart = () => {
-    // TODO: Implement cart functionality
-    console.log('Adding to cart:', { productId: id, quantity })
+    if (product) {
+      addItem({
+        id: product.id,
+        name: product.nom,
+        price: product.prix,
+        quantity: quantity,
+        image: product.imageURL || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80',
+        stock: product.stock
+      })
+      toast.success('Added to cart')
+    }
   }
 
   const incrementQuantity = () => {
