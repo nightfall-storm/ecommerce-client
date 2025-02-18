@@ -14,6 +14,15 @@ export interface OrderDetail {
   produitID: number
   quantite: number
   prixUnitaire: number
+  product: {
+    id: number
+    nom: string
+    description: string
+    prix: number
+    stock: number
+    imageURL: string
+    categorieID: number
+  }
 }
 
 export interface CreateOrderRequest {
@@ -47,7 +56,7 @@ export const getOrders = async (clientId: number): Promise<Order[]> => {
 
 export const getOrderDetails = async (orderId: number): Promise<OrderDetail[]> => {
   try {
-    const response = await api.get<OrderDetail[]>(`/OrderDetails?commandeID=${orderId}`)
+    const response = await api.get<OrderDetail[]>(`/OrderDetails/Order/${orderId}`)
     return response.data
   } catch (error) {
     console.error('API Error:', error)

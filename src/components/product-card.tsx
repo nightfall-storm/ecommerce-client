@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import Image from "next/image"
 import Link from "next/link"
+import { useCartStore } from "@/lib/store/cart"
+import { toast } from "sonner"
 
 interface ProductCardProps {
   product: {
@@ -11,12 +13,15 @@ interface ProductCardProps {
     price: number
     image: string
     category: string
+    stock?: number
   }
 }
 
 const fallbackImage = "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80"
 
 export function ProductCard({ product }: ProductCardProps) {
+  const addItem = useCartStore((state) => state.addItem)
+
   // Ensure image URL is absolute and handle potential undefined/null values
   const imageUrl = product.image && typeof product.image === 'string'
     ? product.image.startsWith('http')
@@ -26,9 +31,21 @@ export function ProductCard({ product }: ProductCardProps) {
         : fallbackImage
     : fallbackImage
 
+  const handleAddToCart = () => {
+    addItem({
+      id: parseInt(product.id),
+      name: product.name,
+      price: product.price,
+      quantity: 1,
+      image: imageUrl,
+      stock: product.stock || 10 // Fallback stock if not provided
+    })
+    toast.success('Added to cart')
+  }
+
   return (
-    <Link href={`/products/${product.id}?id=${product.id}`} className="block group">
-      <Card className="flex flex-col justify-between overflow-hidden transition-all hover:shadow-lg">
+    <Card className="flex flex-col justify-between overflow-hidden transition-all hover:shadow-lg">
+      <Link href={`/products/${product.id}?id=${product.id}`}>
         <CardHeader className="p-0">
           <div className="aspect-square relative overflow-hidden">
             <Image
@@ -53,10 +70,10 @@ export function ProductCard({ product }: ProductCardProps) {
             <p className="font-bold text-lg">${product.price}</p>
           </div>
         </CardContent>
-        <CardFooter className="p-4 pt-0">
-          <Button className="w-full">View Details</Button>
-        </CardFooter>
-      </Card>
-    </Link>
+      </Link>
+      <CardFooter className="p-4 pt-0">
+        <Button className="w-full" onClick={handleAddToCart}>Add to Cart</Button>
+      </CardFooter>
+    </Card>
   )
 }
