@@ -1,21 +1,26 @@
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
-import { Order } from "@/services/orders"
+import { Order, OrderStatus, updateOrderStatus } from "@/services/orders"
 import { Badge } from "@/components/ui/badge"
 import { DataTableColumnHeader } from "./data-table-column-header"
 import { Button } from "@/components/ui/button"
-import { MoreHorizontal } from "lucide-react"
+import { MoreHorizontal, CheckCircle, XCircle, Clock } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import Link from "next/link"
 import { formatPrice } from "@/lib/utils"
+import { useQueryClient } from "@tanstack/react-query"
+import { toast } from "sonner"
 
 export const columns: ColumnDef<Order>[] = [
   {
@@ -84,6 +89,18 @@ export const columns: ColumnDef<Order>[] = [
     id: "actions",
     cell: ({ row }) => {
       const order = row.original
+      const queryClient = useQueryClient()
+
+      const handleStatusUpdate = async (newStatus: OrderStatus) => {
+        try {
+          await updateOrderStatus(order.id, newStatus)
+          // Invalidate and refetch orders
+          await queryClient.invalidateQueries({ queryKey: ["orders"] })
+          toast.success(`Order status updated to ${newStatus}`)
+        } catch (error) {
+          toast.error("Failed to update order status")
+        }
+      }
 
       return (
         <DropdownMenu>
@@ -99,10 +116,34 @@ export const columns: ColumnDef<Order>[] = [
               <Link href={`/orders/${order.id}`}>View order details</Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Update status</DropdownMenuItem>
-            <DropdownMenuItem className="text-red-600">
-              Cancel order
-            </DropdownMenuItem>
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>
+                <Clock className="mr-2 h-4 w-4" />
+                Update status
+              </DropdownMenuSubTrigger>
+              <DropdownMenuSubContent>
+                <DropdownMenuItem onClick={() => handleStatusUpdate("Pending")}>
+                  <Clock className="mr-2 h-4 w-4 text-yellow-500" />
+                  Mark as Pending
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleStatusUpdate("Processing")}>
+                  <Clock className="mr-2 h-4 w-4 text-blue-500" />
+                  Mark as Processing
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleStatusUpdate("Completed")}>
+                  <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
+                  Mark as Completed
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => handleStatusUpdate("Cancelled")}
+                  className="text-red-600"
+                >
+                  <XCircle className="mr-2 h-4 w-4" />
+                  Cancel Order
+                </DropdownMenuItem>
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
           </DropdownMenuContent>
         </DropdownMenu>
       )

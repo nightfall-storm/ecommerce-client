@@ -34,6 +34,8 @@ export interface CreateOrderRequest {
   }[]
 }
 
+export type OrderStatus = "Pending" | "Processing" | "Completed" | "Cancelled"
+
 export const createOrder = async (orderData: CreateOrderRequest): Promise<Order> => {
   try {
     const response = await api.post<Order>('/api/Orders', orderData)
@@ -74,5 +76,17 @@ export const getOrderDetails = async (orderId: number): Promise<OrderDetail[]> =
   } catch (error) {
     console.error('API Error:', error)
     throw new Error('Failed to fetch order details')
+  }
+}
+
+export const updateOrderStatus = async (orderId: number, status: OrderStatus): Promise<Order> => {
+  try {
+    const response = await api.patch<Order>(`/api/Orders/${orderId}/status`, {
+      status: status
+    })
+    return response.data
+  } catch (error) {
+    console.error('API Error:', error)
+    throw new Error('Failed to update order status')
   }
 }
