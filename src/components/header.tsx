@@ -18,20 +18,28 @@ import {
 import { useToast } from "@/components/ui/use-toast"
 import { useEffect, useState } from "react"
 import { isAuthenticated, logout, getUser } from "@/lib/actions/auth"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export function Header() {
   const router = useRouter()
   const { toast } = useToast()
   const [isAuth, setIsAuth] = useState(false)
   const [user, setUser] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const checkAuth = async () => {
-      const auth = await isAuthenticated()
-      setIsAuth(auth)
-      if (auth) {
-        const userData = await getUser()
-        setUser(userData)
+      try {
+        const auth = await isAuthenticated()
+        setIsAuth(auth)
+        if (auth) {
+          const userData = await getUser()
+          setUser(userData)
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error)
+      } finally {
+        setIsLoading(false)
       }
     }
     checkAuth()
@@ -59,7 +67,13 @@ export function Header() {
         </div>
 
         <div className="flex items-center space-x-4">
-          {isAuth ? (
+          {isLoading ? (
+            <div className="flex items-center space-x-4">
+              <Skeleton className="h-10 w-20" />
+              <Skeleton className="h-10 w-20" />
+              <Skeleton className="h-10 w-10" />
+            </div>
+          ) : isAuth ? (
             <>
               <Cart />
               <DropdownMenu>
