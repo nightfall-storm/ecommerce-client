@@ -53,6 +53,7 @@ export function Header() {
       title: "Logged out successfully",
       description: "Come back soon!",
     })
+    router.refresh()
   }
 
   return (

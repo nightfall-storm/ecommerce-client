@@ -17,6 +17,7 @@ import { getUser } from "@/lib/actions/auth"
 import { Loader } from "@/components/loader"
 import { useQuery } from "@tanstack/react-query"
 import Link from "next/link"
+import { createCheckoutSession } from "@/services/checkout"
 
 interface ShippingDetails {
   fullName: string
@@ -59,11 +60,11 @@ export default function CheckoutPage() {
   }, [user])
 
   // Redirect to home if cart is empty
-  useEffect(() => {
-    if (items.length === 0) {
-      router.push("/")
-    }
-  }, [items, router])
+  // useEffect(() => {
+  //   if (items.length === 0) {
+  //     router.push("/")
+  //   }
+  // }, [items, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -89,21 +90,18 @@ export default function CheckoutPage() {
     try {
       setLoading(true)
 
-      // TODO: Implement order creation logic here
-      // const order = await createOrder({
-      //   userId: user.id,
-      //   items,
-      //   shippingDetails,
-      //   total
-      // })
+      // Process the checkout using createCheckoutSession
+      const result = await createCheckoutSession(items)
 
-      // Simulate order creation
-      await new Promise(resolve => setTimeout(resolve, 2000))
-
-      clearCart()
-      toast.success("Order placed successfully!")
-      router.push("/orders")
+      if (result.status === 'success') {
+        clearCart()
+        toast.success("Order placed successfully!")
+        // router.push("/orders")
+      } else {
+        throw new Error('Checkout failed')
+      }
     } catch (error) {
+      console.error('Checkout error:', error)
       toast.error("Failed to place order. Please try again.")
     } finally {
       setLoading(false)

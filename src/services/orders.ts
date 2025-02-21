@@ -8,6 +8,8 @@ export interface Order {
   total: number
 }
 
+type CreateOrder = Omit<Order, "id">
+
 export interface OrderDetail {
   id: number
   commandeID: number
@@ -36,7 +38,7 @@ export interface CreateOrderRequest {
 
 export type OrderStatus = "Pending" | "Processing" | "Completed" | "Cancelled"
 
-export const createOrder = async (orderData: CreateOrderRequest): Promise<Order> => {
+export const createOrder = async (orderData: CreateOrder): Promise<Order> => {
   try {
     const response = await api.post<Order>('/api/Orders', orderData)
     return response.data
@@ -81,7 +83,7 @@ export const getOrderDetails = async (orderId: number): Promise<OrderDetail[]> =
 
 export const updateOrderStatus = async (orderId: number, status: OrderStatus): Promise<Order> => {
   try {
-    const response = await api.patch<Order>(`/api/Orders/${orderId}`, {
+    const response = await api.patch<Order>(`/api/Orders/${orderId}/status`, {
       status: status
     })
     return response.data

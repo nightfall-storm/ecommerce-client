@@ -4,6 +4,11 @@ import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import api from "@/lib/axios"
 
+export async function getToken() {
+  const cookieStore = await cookies()
+  return cookieStore.get("accessToken")
+}
+
 export interface LoginCredentials {
   email: string
   motDePasse: string
@@ -26,6 +31,7 @@ export async function login(credentials: LoginCredentials) {
 
     return { success: true }
   } catch (error) {
+    console.log(error)
     return { success: false, error: "Invalid credentials" }
   }
 }
@@ -34,7 +40,6 @@ export async function logout() {
   // Delete the token cookie
   const cookieStore = await cookies()
   cookieStore.delete("accessToken")
-  redirect("/")
 }
 
 export async function getUser() {
@@ -67,4 +72,23 @@ export async function isAuthenticated() {
 export async function checkAdmin() {
   const user = await getUser()
   return user?.role === "admin"
+}
+
+export interface RegisterCredentials {
+  email: string;
+  motDePasse: string;
+  nom: string;
+  prenom: string;
+  adresse: string;
+  telephone: string;
+}
+
+export async function register(credentials: RegisterCredentials) {
+  try {
+    const response = await api.post("/api/Auth/register", credentials);
+    return { success: true, data: response.data };
+  } catch (error) {
+    console.log(error);
+    return { success: false, error: "Registration failed" };
+  }
 }
