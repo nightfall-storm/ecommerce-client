@@ -1,3 +1,4 @@
+import { getUser } from '@/lib/actions/auth'
 import api from '@/lib/axios'
 import { CartItem } from '@/lib/store/cart'
 
@@ -34,7 +35,8 @@ export interface CheckoutResponse {
 
 export const createCheckoutSession = async (items: CartItem[]): Promise<CheckoutResponse> => {
   try {
-    const clientId = 19
+    const user = await getUser()
+    const clientId = user?.id
     const total = items.reduce((total, item) => total + (item.price * item.quantity), 0)
 
     // First, create the order
