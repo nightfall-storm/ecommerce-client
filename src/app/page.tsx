@@ -16,10 +16,26 @@ import { motion } from 'framer-motion'
 
 const categories = [0, 1, 2, 3]
 
-const slideIn = {
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+}
+
+const itemVariants = {
   hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0 },
-};
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.5
+    }
+  }
+}
 
 export default function Home() {
   const { ref, inView } = useInView()
@@ -74,62 +90,94 @@ export default function Home() {
   const products = data?.pages.flatMap(page => page.items) ?? []
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <motion.div
+      className="flex min-h-screen flex-col"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
       <Header />
       <main className="flex-1">
         <Hero />
 
         <section className="container mx-auto px-4 py-16 max-w-7xl">
-          <div className="flex items-center justify-between mb-8">
+          <motion.div
+            className="flex items-center justify-between mb-8"
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          >
             <h2 className="text-3xl font-bold tracking-tight">Featured Products</h2>
-            <Button variant="outline" className="hidden md:flex">
-              <Filter className="mr-2 h-4 w-4" />
-              Filter
-            </Button>
-          </div>
-
-          <div className="flex gap-4 mb-8 overflow-x-auto pb-2 scrollbar-hide">
-            {categories.map((category) => (
-              <Button
-                key={category}
-                variant={selectedCategory === category ? "default" : "outline"}
-                className="rounded-full whitespace-nowrap"
-                onClick={() => setSelectedCategory(category)}
-              >
-                {category === 0 ? "All" : `Category ${category}`}
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button variant="outline" className="hidden md:flex">
+                <Filter className="mr-2 h-4 w-4" />
+                Filter
               </Button>
+            </motion.div>
+          </motion.div>
+
+          <motion.div
+            className="flex gap-4 mb-8 overflow-x-auto pb-2 scrollbar-hide"
+            initial={{ x: -20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            {categories.map((category) => (
+              <motion.div
+                key={category}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Button
+                  variant={selectedCategory === category ? "default" : "outline"}
+                  className="rounded-full whitespace-nowrap"
+                  onClick={() => setSelectedCategory(category)}
+                >
+                  {category === 0 ? "All" : `Category ${category}`}
+                </Button>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
 
           {status === 'pending' ? (
             <div className="space-y-8">
-              {/* <div className="flex justify-center">
-                <Loader size="lg" />
-              </div> */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {[...Array(8)].map((_, index) => (
-                  <div key={index} className="space-y-4">
+                  <motion.div
+                    key={index}
+                    className="space-y-4"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                  >
                     <Skeleton className="h-[200px] w-full" />
                     <Skeleton className="h-4 w-[250px]" />
                     <Skeleton className="h-4 w-[200px]" />
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             </div>
           ) : status === 'error' ? (
-            <div className="text-center text-red-500">
+            <motion.div
+              className="text-center text-red-500"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
+            >
               <p>Error loading products. Please try again later.</p>
-            </div>
+            </motion.div>
           ) : (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <motion.div
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+              >
                 {products.map((product) => (
                   <motion.div
                     key={product.id}
-                    variants={slideIn}
-                    initial="hidden"
-                    animate="visible"
-                    transition={{ duration: 0.5 }}
+                    variants={itemVariants}
                   >
                     <ProductCard
                       product={{
@@ -142,49 +190,66 @@ export default function Home() {
                     />
                   </motion.div>
                 ))}
-              </div>
+              </motion.div>
 
-              {/* Loading indicator and observer target */}
               <div ref={ref} className="mt-8">
                 {isFetchingNextPage && (
-                  <div className="space-y-8">
-                    {/* <div className="flex justify-center">
-                      <Loader size="lg" />
-                    </div> */}
+                  <motion.div
+                    className="space-y-8"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.5 }}
+                  >
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                       {[...Array(4)].map((_, index) => (
-                        <div key={index} className="space-y-4">
+                        <motion.div
+                          key={index}
+                          className="space-y-4"
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.5, delay: index * 0.1 }}
+                        >
                           <Skeleton className="h-[200px] w-full" />
                           <Skeleton className="h-4 w-[250px]" />
                           <Skeleton className="h-4 w-[200px]" />
-                        </div>
+                        </motion.div>
                       ))}
                     </div>
-                  </div>
+                  </motion.div>
                 )}
               </div>
             </>
           )}
         </section>
 
-        <section className="container mx-auto px-4 py-16 max-w-7xl border-t">
+        <motion.section
+          className="container mx-auto px-4 py-16 max-w-7xl border-t"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          viewport={{ once: true }}
+        >
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-            <div>
-              <h3 className="text-lg font-semibold mb-2">Free Shipping</h3>
-              <p className="text-muted-foreground">On orders over $50</p>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold mb-2">Secure Payment</h3>
-              <p className="text-muted-foreground">100% secure payment</p>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold mb-2">24/7 Support</h3>
-              <p className="text-muted-foreground">Dedicated support</p>
-            </div>
+            {[
+              { title: "Free Shipping", desc: "On orders over $50" },
+              { title: "Secure Payment", desc: "100% secure payment" },
+              { title: "24/7 Support", desc: "Dedicated support" }
+            ].map((item, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                viewport={{ once: true }}
+              >
+                <h3 className="text-lg font-semibold mb-2">{item.title}</h3>
+                <p className="text-muted-foreground">{item.desc}</p>
+              </motion.div>
+            ))}
           </div>
-        </section>
+        </motion.section>
       </main>
       <Footer />
-    </div>
+    </motion.div>
   )
 }

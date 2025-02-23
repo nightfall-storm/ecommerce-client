@@ -18,6 +18,7 @@ import { Loader } from "@/components/loader"
 import { useQuery } from "@tanstack/react-query"
 import Link from "next/link"
 import { createCheckoutSession } from "@/services/checkout"
+import { motion } from 'framer-motion'
 
 interface ShippingDetails {
   fullName: string
@@ -110,43 +111,78 @@ export default function CheckoutPage() {
 
   if (items.length === 0) {
     return (
-      <div className="flex min-h-screen flex-col">
+      <motion.div
+        className="flex min-h-screen flex-col"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.5 }}
+      >
         <Header />
         <main className="flex-1 container mx-auto px-4 py-8">
-          <div className="max-w-2xl mx-auto text-center">
+          <motion.div
+            className="max-w-2xl mx-auto text-center"
+            initial={{ scale: 0.95, y: 20 }}
+            animate={{ scale: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
             <h1 className="text-2xl font-bold mb-4">Your cart is empty</h1>
             <p className="text-muted-foreground mb-8">
               Add some items to your cart to proceed with checkout
             </p>
-            <Button asChild>
-              <Link href="/">Continue Shopping</Link>
-            </Button>
-          </div>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button asChild>
+                <Link href="/">Continue Shopping</Link>
+              </Button>
+            </motion.div>
+          </motion.div>
         </main>
         <Footer />
-      </div>
+      </motion.div>
     )
   }
 
   if (isLoadingUser) {
     return (
-      <div className="flex min-h-screen flex-col">
+      <motion.div
+        className="flex min-h-screen flex-col"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.5 }}
+      >
         <Header />
         <main className="flex-1 container mx-auto px-4 py-8">
-          <div className="h-[400px]">
+          <motion.div
+            className="h-[400px]"
+            initial={{ scale: 0.95 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 0.5 }}
+          >
             <Loader size="lg" className="h-full" />
-          </div>
+          </motion.div>
         </main>
         <Footer />
-      </div>
+      </motion.div>
     )
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <motion.div
+      className="flex min-h-screen flex-col"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.5 }}
+    >
       <Header />
       <main className="flex-1 container mx-auto px-4 py-8">
-        <div className="max-w-6xl mx-auto">
+        <motion.div
+          className="max-w-6xl mx-auto"
+          initial={{ y: 20 }}
+          animate={{ y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
           <h1 className="text-3xl font-bold mb-8">Checkout</h1>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -306,9 +342,9 @@ export default function CheckoutPage() {
               </Card>
             </div>
           </div>
-        </div>
+        </motion.div>
       </main>
       <Footer />
-    </div>
+    </motion.div>
   )
 }

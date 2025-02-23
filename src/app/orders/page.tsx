@@ -13,6 +13,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { getUser } from "@/lib/actions/auth"
 import { Loader } from "@/components/loader"
+import { motion } from "framer-motion"
 
 interface OrderWithDetails {
   id: number
@@ -53,6 +54,27 @@ const getStatusColor = (status: string) => {
   }
 }
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+}
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.5
+    }
+  }
+}
+
 export default function OrdersPage() {
   // Query for user data
   const { data: user, isLoading: isLoadingUser } = useQuery({
@@ -63,7 +85,7 @@ export default function OrdersPage() {
   // Query for orders
   const { data: orders, isLoading: isLoadingOrders } = useQuery({
     queryKey: ['orders', user?.id],
-    queryFn: () => getOrders(user?.id!),
+    queryFn: () => getOrders(user?.id),
     enabled: !!user?.id,
   })
 
@@ -86,105 +108,148 @@ export default function OrdersPage() {
   const isLoading = isLoadingUser || isLoadingOrders || isLoadingDetails
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <motion.div
+      className="flex min-h-screen flex-col"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.5 }}
+    >
       <Header />
       <main className="flex-1 container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold mb-8">My Orders</h1>
+        <motion.div
+          className="max-w-4xl mx-auto"
+          initial={{ y: 20 }}
+          animate={{ y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <motion.h1
+            className="text-3xl font-bold mb-8"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            My Orders
+          </motion.h1>
 
           {isLoading ? (
-            <div className="h-[400px]">
+            <motion.div
+              className="h-[400px]"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
+            >
               <Loader size="lg" className="h-full" />
-            </div>
+            </motion.div>
           ) : !ordersWithDetails || ordersWithDetails.length === 0 ? (
-            <div className="text-center py-12">
+            <motion.div
+              className="text-center py-12"
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.5 }}
+            >
               <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <h3 className="text-lg font-medium mb-2">No orders found</h3>
               <p className="text-muted-foreground mb-4">
-                You haven't placed any orders yet.
+                You haven&apos;t placed any orders yet.
               </p>
-              <Button asChild>
-                <Link href="/">Start Shopping</Link>
-              </Button>
-            </div>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button asChild>
+                  <Link href="/">Start Shopping</Link>
+                </Button>
+              </motion.div>
+            </motion.div>
           ) : (
-            <div className="space-y-6">
+            <motion.div
+              className="space-y-6"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+            >
               {ordersWithDetails
                 .sort((a, b) => new Date(b.dateCommande).getTime() - new Date(a.dateCommande).getTime())
                 .map((order: OrderWithDetails) => (
-                <div
-                  key={order.id}
-                  className="border rounded-lg overflow-hidden bg-card"
-                >
-                  <div className="p-6">
-                    <div className="flex items-center justify-between mb-6">
-                      <div className="space-y-1">
-                        <h2 className="text-lg font-medium">Order #{order.id}</h2>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Calendar className="h-4 w-4" />
-                          {new Date(order.dateCommande).toLocaleDateString()}
+                  <motion.div
+                    key={order.id}
+                    variants={itemVariants}
+                    whileHover={{ scale: 1.02 }}
+                    className="border rounded-lg overflow-hidden bg-card"
+                  >
+                    <div className="p-6">
+                      <div className="flex items-center justify-between mb-6">
+                        <div className="space-y-1">
+                          <h2 className="text-lg font-medium">Order #{order.id}</h2>
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Calendar className="h-4 w-4" />
+                            {new Date(order.dateCommande).toLocaleDateString()}
+                          </div>
                         </div>
-                      </div>
-                      <Badge
-                        variant="outline"
-                        className={getStatusColor(order.statut)}
-                      >
-                        {order.statut}
-                      </Badge>
-                    </div>
-
-                    <div className="space-y-4">
-                      {order.details?.map((detail) => (
-                        <div
-                          key={detail.id}
-                          className="flex items-center gap-4 p-4 rounded-lg bg-muted/40"
+                        <Badge
+                          variant="outline"
+                          className={getStatusColor(order.statut)}
                         >
-                          <div className="relative aspect-square h-20 w-20 min-w-fit overflow-hidden rounded-lg border bg-white">
-                            <Image
-                              src={detail.product.imageURL}
-                              alt={detail.product.nom}
-                              fill
-                              className="object-cover"
-                            />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-medium truncate">
-                              {detail.product.nom}
-                            </h3>
-                            <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
-                              <p>Unit Price: {formatPrice(detail.prixUnitaire)}</p>
-                              <span>•</span>
-                              <p>Quantity: {detail.quantite}</p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <p className="font-medium">
-                              {formatPrice(detail.prixUnitaire * detail.quantite)}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    <Separator className="my-6" />
-
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-muted-foreground">Total Amount</p>
-                        <p className="text-2xl font-bold">{formatPrice(order.total)}</p>
+                          {order.statut}
+                        </Badge>
                       </div>
-                      <Button asChild variant="outline">
-                        <Link href={`/orders/${order.id}`}>View Details</Link>
-                      </Button>
+
+                      <motion.div
+                        className="space-y-4"
+                        variants={containerVariants}
+                      >
+                        {order.details?.map((detail) => (
+                          <motion.div
+                            key={detail.id}
+                            variants={itemVariants}
+                            className="flex items-center gap-4 p-4 rounded-lg bg-muted/40"
+                          >
+                            <div className="relative aspect-square h-20 w-20 min-w-fit overflow-hidden rounded-lg border bg-white">
+                              <Image
+                                src={detail.product.imageURL}
+                                alt={detail.product.nom}
+                                fill
+                                className="object-cover"
+                              />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-medium truncate">
+                                {detail.product.nom}
+                              </h3>
+                              <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
+                                <p>Unit Price: {formatPrice(detail.prixUnitaire)}</p>
+                                <span>•</span>
+                                <p>Quantity: {detail.quantite}</p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-medium">
+                                {formatPrice(detail.prixUnitaire * detail.quantite)}
+                              </p>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </motion.div>
+
+                      <Separator className="my-6" />
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Total Amount</p>
+                          <p className="text-2xl font-bold">{formatPrice(order.total)}</p>
+                        </div>
+                        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                          <Button asChild variant="outline">
+                            <Link href={`/orders/${order.id}`}>View Details</Link>
+                          </Button>
+                        </motion.div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                  </motion.div>
+                ))}
+            </motion.div>
           )}
-        </div>
+        </motion.div>
       </main>
       <Footer />
-    </div>
+    </motion.div>
   )
 }
