@@ -16,6 +16,13 @@ export interface OrderDetailRequest {
   produitID: number
   quantite: number
   prixUnitaire: number
+  order: {
+    id: number
+    clientID: number
+    dateCommande: string
+    statut: string
+    total: number
+  }
   product: {
     id: number
     nom: string
@@ -24,6 +31,7 @@ export interface OrderDetailRequest {
     stock: number
     imageURL: string
     categorieID: number
+    orderDetails: string[]
   }
 }
 
@@ -59,14 +67,22 @@ export const createCheckoutSession = async (items: CartItem[]): Promise<Checkout
         produitID: item.id,
         quantite: item.quantity,
         prixUnitaire: item.price,
+        order: {
+          id: orderId,
+          clientID: clientId,
+          dateCommande: new Date().toISOString(),
+          statut: "Pending",
+          total: total
+        },
         product: {
           id: item.id,
           nom: item.name,
-          description: "", // We don't have this in CartItem
+          description: "", // Assuming you don't have this in CartItem
           prix: item.price,
           stock: item.stock,
           imageURL: item.image,
-          categorieID: 0 // We don't have this in CartItem
+          categorieID: 0, // Assuming you don't have this in CartItem
+          orderDetails: [] // You can populate this if needed
         }
       }
       await api.post('/OrderDetails', orderDetail)

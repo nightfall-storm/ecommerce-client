@@ -9,14 +9,44 @@ import { Filter } from "lucide-react"
 import { useInfiniteQuery } from "@tanstack/react-query"
 import { getPublicProducts } from "@/services/products"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Loader } from "@/components/loader"
+// import { Loader } from "@/components/loader"
 import { useInView } from "react-intersection-observer"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
+import { motion } from 'framer-motion'
 
-const categories = ["All", "Electronics", "Sports", "Accessories", "Fashion"]
+const categories = [0, 1, 2, 3]
+
+const slideIn = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0 },
+};
 
 export default function Home() {
   const { ref, inView } = useInView()
+  const [selectedCategory, setSelectedCategory] = useState<number>(0) // Default to 'All'
+  const [searchTerm, setSearchTerm] = useState<string>("")
+
+  // Add search event listener
+  useEffect(() => {
+    const handleSearchEvent = (event: CustomEvent<string>) => {
+      setSearchTerm(event.detail);
+    };
+
+    window.addEventListener('product-search', handleSearchEvent as EventListener);
+
+    return () => {
+      window.removeEventListener('product-search', handleSearchEvent as EventListener);
+    };
+  }, []);
+
+  // Add URL search param handler
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const search = searchParams.get('search');
+    if (search) {
+      setSearchTerm(search);
+    }
+  }, []);
 
   const {
     data,
@@ -25,8 +55,8 @@ export default function Home() {
     isFetchingNextPage,
     status,
   } = useInfiniteQuery({
-    queryKey: ['products'],
-    queryFn: ({ pageParam = 1 }) => getPublicProducts(pageParam),
+    queryKey: ['products', selectedCategory, searchTerm],
+    queryFn: ({ pageParam = 1 }) => getPublicProducts(pageParam, 8, selectedCategory, searchTerm),
     getNextPageParam: (lastPage) => {
       return lastPage.hasMore ? lastPage.currentPage + 1 : undefined
     },
@@ -62,19 +92,20 @@ export default function Home() {
             {categories.map((category) => (
               <Button
                 key={category}
-                variant={category === "All" ? "default" : "outline"}
+                variant={selectedCategory === category ? "default" : "outline"}
                 className="rounded-full whitespace-nowrap"
+                onClick={() => setSelectedCategory(category)}
               >
-                {category}
+                {category === 0 ? "All" : `Category ${category}`}
               </Button>
             ))}
           </div>
 
           {status === 'pending' ? (
             <div className="space-y-8">
-              <div className="flex justify-center">
+              {/* <div className="flex justify-center">
                 <Loader size="lg" />
-              </div>
+              </div> */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {[...Array(8)].map((_, index) => (
                   <div key={index} className="space-y-4">
@@ -93,16 +124,23 @@ export default function Home() {
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {products.map((product) => (
-                  <ProductCard
+                  <motion.div
                     key={product.id}
-                    product={{
-                      id: product.id.toString(),
-                      name: product.nom,
-                      price: product.prix,
-                      image: product.imageURL,
-                      category: `Category ${product.categorieID}`
-                    }}
-                  />
+                    variants={slideIn}
+                    initial="hidden"
+                    animate="visible"
+                    transition={{ duration: 0.5 }}
+                  >
+                    <ProductCard
+                      product={{
+                        id: product.id.toString(),
+                        name: product.nom,
+                        price: product.prix,
+                        image: product.imageURL,
+                        category: `Category ${product.categorieID}`
+                      }}
+                    />
+                  </motion.div>
                 ))}
               </div>
 
@@ -110,9 +148,9 @@ export default function Home() {
               <div ref={ref} className="mt-8">
                 {isFetchingNextPage && (
                   <div className="space-y-8">
-                    <div className="flex justify-center">
+                    {/* <div className="flex justify-center">
                       <Loader size="lg" />
-                    </div>
+                    </div> */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                       {[...Array(4)].map((_, index) => (
                         <div key={index} className="space-y-4">

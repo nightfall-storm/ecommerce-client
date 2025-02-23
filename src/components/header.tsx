@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ShoppingCart, User, LogOut } from "lucide-react"
+import {  User, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SearchBar } from "./search-bar"
 import { ThemeToggle } from "./theme-toggle"
@@ -19,13 +19,19 @@ import { useToast } from "@/components/ui/use-toast"
 import { useEffect, useState } from "react"
 import { isAuthenticated, logout, getUser } from "@/lib/actions/auth"
 import { Skeleton } from "@/components/ui/skeleton"
+import SearchResults from './search-results'
+import { Product } from '@/services/products'
+import { getPublicProducts } from '@/services/products'
 
 export function Header() {
   const router = useRouter()
   const { toast } = useToast()
   const [isAuth, setIsAuth] = useState(false)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [user, setUser] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [searchResults, setSearchResults] = useState<Product[]>([])
+  const [showResults, setShowResults] = useState(false)
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -56,6 +62,26 @@ export function Header() {
     router.refresh()
   }
 
+  const handleSearch = async (query: string) => {
+    // If we're not on the home page, navigate to it
+    if (window.location.pathname !== '/') {
+      router.push(`/?search=${encodeURIComponent(query)}`)
+    }
+    // Emit a custom event that the home page can listen to
+    const searchEvent = new CustomEvent('product-search', { detail: query })
+    window.dispatchEvent(searchEvent)
+
+    // Fetch search results from the backend
+    if (query) {
+      const response = await getPublicProducts(1, 8, undefined, query)
+      setSearchResults(response.items)
+      setShowResults(true)
+    } else {
+      setSearchResults([])
+      setShowResults(false)
+    }
+  }
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4 max-w-7xl flex h-16 items-center justify-between">
@@ -64,7 +90,8 @@ export function Header() {
         </Link>
 
         <div className="flex-1 mx-8">
-          <SearchBar onSearch={(query) => console.log(query)} />
+          <SearchBar onSearch={handleSearch} />
+          {showResults && <SearchResults results={searchResults} onClose={() => setShowResults(false)} />}
         </div>
 
         <div className="flex items-center space-x-4">

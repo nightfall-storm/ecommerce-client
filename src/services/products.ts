@@ -47,15 +47,27 @@ export const getProducts = async (): Promise<Product[]> => {
 }
 
 // For public page - get products with pagination
-export const getPublicProducts = async (page: number = 1, pageSize: number = 8): Promise<ProductsPageResponse> => {
+export const getPublicProducts = async (
+  page: number = 1,
+  pageSize: number = 8,
+  categoryId?: number,
+  searchTerm?: string
+): Promise<ProductsPageResponse> => {
   try {
-    const response = await api.get<Product[]>('/Products')
-    const products = response.data
+    const queryParams = new URLSearchParams({
+      page: page.toString(),
+      pageSize: pageSize.toString(),
+      ...(categoryId !== undefined && categoryId !== 0 && { categoryId: categoryId.toString() }),
+      ...(searchTerm && { searchTerm })
+    });
+
+    const response = await api.get<Product[]>(`/Products?${queryParams}`);
+    const products = response.data;
 
     // Calculate pagination
-    const startIndex = (page - 1) * pageSize
-    const endIndex = startIndex + pageSize
-    const paginatedProducts = products.slice(startIndex, endIndex)
+    const startIndex = (page - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    const paginatedProducts = products.slice(startIndex, endIndex);
 
     return {
       items: paginatedProducts,
@@ -63,10 +75,10 @@ export const getPublicProducts = async (page: number = 1, pageSize: number = 8):
       total: products.length,
       currentPage: page,
       pageSize: pageSize
-    }
+    };
   } catch (error) {
-    console.error('API Error:', error)
-    throw new Error('Failed to fetch products')
+    console.error('API Error:', error);
+    throw new Error('Failed to fetch products');
   }
 }
 

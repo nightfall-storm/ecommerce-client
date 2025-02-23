@@ -28,7 +28,7 @@ interface ShippingDetails {
 
 export default function CheckoutPage() {
   const router = useRouter()
-  const { items, getTotalPrice, clearCart } = useCartStore()
+  const { items, clearCart } = useCartStore()
   const [loading, setLoading] = useState(false)
   const [shippingDetails, setShippingDetails] = useState<ShippingDetails>({
     fullName: "",
